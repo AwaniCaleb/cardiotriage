@@ -4,10 +4,14 @@ import com.cardiotriage.dto.PatientRequest;
 import com.cardiotriage.dto.PatientResponse;
 import com.cardiotriage.dto.PatientSummary;
 import com.cardiotriage.model.Patient;
+import com.cardiotriage.model.Recording;
 import com.cardiotriage.repository.PatientRepository;
+import com.cardiotriage.repository.RecordingRepository;
+import com.cardiotriage.repository.TriageResultRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -17,6 +21,8 @@ import java.util.List;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final RecordingRepository recordingRepository;
+    private final TriageResultRepository triageResultRepository;
 
     public List<PatientSummary> getAllPatients() {
         return patientRepository.findAllByOrderByCreatedAtDesc().stream()
@@ -56,8 +62,18 @@ public class PatientService {
         return toResponse(patientRepository.save(patient));
     }
 
+    @Transactional
     public void deletePatient(Long id) {
-        patientRepository.delete(findPatientOrThrow(id));
+        Patient patient = findPatientOrThrow(id);
+
+        List<Recording> recordings = recordingRepository.findByPatientIdOrderByUploadedAtDesc(id);
+        for (Recording recording : recordings) {
+            triageResultRepository.findByRecordingId(recording.getId())
+                    .ifPresent(triageResultRepository::delete);
+        }
+        recordingRepository.deleteAll(recordings);
+
+        patientRepository.delete(patient);
     }
 
     private Patient findPatientOrThrow(Long id) {

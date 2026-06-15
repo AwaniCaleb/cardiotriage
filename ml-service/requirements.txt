@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+torch --index-url https://download.pytorch.org/whl/cpu
+numpy
+scipy
+sse-starlette
+python-multipart
+pydantic

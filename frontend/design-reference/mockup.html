@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardioTriage — Design Reference</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CARDIOTRIAGE DESIGN REFERENCE
+   All screens with dark/light theme toggle.
+   CC: when building Vue pages, match these screens exactly.
+   ═══════════════════════════════════════════════════════════
+
+   DESIGN TOKENS
+   ─────────────
+   Sidebar (ALWAYS dark in both themes):
+     bg:            #0A1120
+     border:        #1A2740
+     active item:   bg #0C2340  text #22D3EE
+     muted text:    #64748B
+     dim text:      #3D5A7A
+
+   Dark theme content area:
+     --bg:    #080E1C
+     --su:    #111827   (cards / surfaces)
+     --tx:    #F1F5F9
+     --tm:    #94A3B8   (muted text)
+     --bd:    #1F2D40   (borders)
+     --ac:    #22D3EE   (accent / interactive)
+
+   Light theme content area:
+     --bg:    #F1F5F9
+     --su:    #FFFFFF
+     --tx:    #0F172A
+     --tm:    #64748B
+     --bd:    #E2E8F0
+     --ac:    #0891B2
+
+   Severity badges:
+     RED    bg #4C0519  text #FCA5A5
+     YELLOW bg #422006  text #FDE68A
+     GREEN  bg #052E16  text #86EFAC
+
+   Warning banner:
+     bg #3B1900  border-bottom #78350F  text #FDE68A
+
+   ECG monitor panel:
+     bg #060C18  border #0C2340
+     ECG line: #22D3EE  PPG line: #F97316
+     grid: rgba(34,211,238,0.07)
+
+   Primary action: #0891B2 (light) / #22D3EE (dark)
+   ─────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F1F5F9; --su: #FFFFFF; --tx: #0F172A;
+  --tm: #64748B; --bd: #E2E8F0; --ac: #0891B2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+[data-dark] {
+  --bg: #080E1C; --su: #111827; --tx: #F1F5F9;
+  --tm: #94A3B8; --bd: #1F2D40; --ac: #22D3EE;
+}
+
+/* ── Nav bar (screen switcher) ── */
+#screen-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  background: #0A1120; border-bottom: 1px solid #1A2740;
+  padding: 8px 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+#screen-nav span { color: #3D5A7A; font-size: 11px; margin-right: 4px; }
+.snav { padding: 4px 11px; border-radius: 6px; border: 1px solid #1A2740;
+  font-size: 11px; cursor: pointer; background: transparent; color: #64748B; }
+.snav.active { background: #0C2340; color: #22D3EE; border-color: #22D3EE; }
+#theme-toggle { margin-left: auto; padding: 4px 11px; border-radius: 6px;
+  border: 1px solid #334155; font-size: 11px; cursor: pointer;
+  background: transparent; color: #94A3B8; }
+
+/* ── App shell ── */
+body { padding-top: 42px; }
+.app-shell { display: flex; height: calc(100vh - 42px); overflow: hidden; }
+.screen { display: none; }
+.screen.active { display: flex; width: 100%; height: 100%; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 186px; background: #0A1120; flex-shrink: 0;
+  border-right: 1px solid #1A2740; display: flex; flex-direction: column;
+}
+.sb-logo { padding: 14px; border-bottom: 1px solid #1A2740; display: flex; align-items: center; gap: 8px; }
+.sb-logo-icon { width: 30px; height: 30px; border-radius: 7px; background: #22D3EE;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sb-logo-icon svg { width: 18px; height: 18px; stroke: #0A1120; fill: none; stroke-width: 2; stroke-linecap: round; }
+.sb-logo-name { color: #F1F5F9; font-size: 13px; font-weight: 500; }
+.sb-logo-sub { color: #3D5A7A; font-size: 10px; }
+.sb-ecg { padding: 8px 14px; border-bottom: 1px solid #1A2740; }
+.sb-nav { padding: 8px; flex: 1; }
+.sb-nav a { display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  border-radius: 7px; cursor: pointer; font-size: 13px; color: #64748B;
+  text-decoration: none; margin-bottom: 2px; transition: background .15s; }
+.sb-nav a:hover { background: rgba(255,255,255,0.04); }
+.sb-nav a.active { background: #0C2340; color: #22D3EE; }
+.sb-nav svg { width: 15px; height: 15px; stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+.sb-bottom { padding: 12px 14px; border-top: 1px solid #1A2740; }
+.sb-user { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sb-avatar { width: 30px; height: 30px; border-radius: 50%; background: #0C2340;
+  display: flex; align-items: center; justify-content: center;
+  color: #22D3EE; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+.sb-user-name { color: #E2E8F0; font-size: 12px; font-weight: 500; }
+.sb-user-role { color: #3D5A7A; font-size: 10px; }
+.sb-theme-btn { width: 100%; padding: 5px; border-radius: 6px; border: 1px solid #1A2740;
+  background: transparent; color: #64748B; font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+/* ── Main content ── */
+.main { flex: 1; overflow-y: auto; background: var(--bg); display: flex; flex-direction: column; }
+.warning-banner {
+  background: #3B1900; border-bottom: 1px solid #78350F;
+  padding: 5px 18px; font-size: 11px; color: #FDE68A;
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.page-content { padding: 18px; flex: 1; }
+
+/* ── Common components ── */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.page-title { font-size: 17px; font-weight: 500; color: var(--tx); line-height: 1; }
+.page-sub { font-size: 11px; color: var(--tm); margin-top: 2px; }
+.btn-primary { padding: 7px 13px; background: #0891B2; color: #fff; border: none;
+  border-radius: 7px; font-size: 12px; cursor: pointer; display: inline-flex;
+  align-items: center; gap: 5px; }
+.btn-secondary { padding: 6px 12px; background: transparent; color: var(--tx);
+  border: 1px solid var(--bd); border-radius: 7px; font-size: 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px; }
+.btn-danger { padding: 5px 10px; background: transparent; color: #FCA5A5;
+  border: 1px solid #4C0519; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.card { background: var(--su); border: 1px solid var(--bd); border-radius: 12px; overflow: hidden; }
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap input { width: 100%; padding: 7px 10px 7px 30px; border-radius: 7px;
+  border: 1px solid var(--bd); background: var(--su); color: var(--tx); font-size: 13px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--tm); }
+.badge { padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 500; display: inline-block; }
+.badge-red    { background: #4C0519; color: #FCA5A5; }
+.badge-yellow { background: #422006; color: #FDE68A; }
+.badge-green  { background: #052E16; color: #86EFAC; }
+.badge-none   { background: var(--bd); color: var(--tm); }
+
+/* ── Table ── */
+.data-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.data-table th { text-align: left; padding: 9px 14px; font-size: 10px; font-weight: 500;
+  color: var(--tm); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--bd); }
+.data-table td { padding: 10px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; color: var(--tx); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr { cursor: pointer; transition: background .12s; }
+.data-table tbody tr:hover { background: rgba(8,145,178,0.05); }
+
+/* ── Stat card ── */
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.stat-card { background: var(--su); border: 1px solid var(--bd); border-radius: 8px; padding: 13px 14px; }
+.stat-label { font-size: 9px; color: var(--tm); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.stat-num { font-size: 26px; font-weight: 500; color: var(--tx); font-family: monospace; }
+.stat-sub { font-size: 11px; color: var(--tm); margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+
+/* ── Vitals grid ── */
+.vitals-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.vital-card { background: var(--su); border: 1px solid var(--bd); border-radius: 8px; padding: 10px 12px; }
+.vital-label { font-size: 9px; color: var(--tm); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.vital-val { font-size: 20px; font-weight: 500; color: var(--tx); font-family: monospace; }
+.vital-unit { font-size: 10px; color: var(--tm); }
+
+/* ── ECG monitor ── */
+.monitor { background: #060C18; border-radius: 8px; border: 1px solid #0C2340; padding: 10px 12px; margin-bottom: 8px; }
+.monitor-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.monitor-label { font-size: 10px; font-weight: 500; color: #64748B; text-transform: uppercase; letter-spacing: .06em; }
+.monitor-tag { font-size: 10px; color: #22D3EE; background: #0C2340; padding: 2px 8px; border-radius: 4px; }
+
+/* ── Rhythm bars ── */
+.rhythm-bars { background: var(--su); border: 1px solid var(--bd); border-radius: 8px; padding: 12px; }
+.rhythm-title { font-size: 10px; font-weight: 500; color: var(--tm); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.rhythm-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.rhythm-name { font-size: 12px; color: var(--tx); width: 88px; }
+.rhythm-track { flex: 1; background: var(--bd); border-radius: 3px; height: 5px; }
+.rhythm-fill { height: 100%; border-radius: 3px; }
+.rhythm-pct { font-size: 11px; color: var(--tm); width: 32px; text-align: right; font-family: monospace; }
+
+/* ── Form ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1/-1; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--tx); }
+.form-input, .form-select, .form-textarea {
+  padding: 8px 12px; border-radius: 7px; border: 1px solid var(--bd);
+  background: var(--su); color: var(--tx); font-size: 13px; width: 100%;
+  font-family: inherit;
+}
+.form-textarea { resize: vertical; min-height: 70px; }
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+/* ── Upload panel ── */
+.upload-panel { background: var(--su); border: 1px solid var(--bd); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+.upload-title { font-size: 13px; font-weight: 500; color: var(--tx); margin-bottom: 12px; }
+.file-drop { border: 1px dashed var(--bd); border-radius: 8px; padding: 20px;
+  text-align: center; color: var(--tm); font-size: 13px; cursor: pointer; }
+
+/* ── Recent activity ── */
+.activity-item { display: flex; align-items: center; gap: 10px; padding: 9px 0;
+  border-bottom: 1px solid var(--bd); }
+.activity-item:last-child { border-bottom: none; }
+.act-avatar { width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; flex-shrink: 0; }
+
+/* ── Landing page ── */
+.landing { display: flex; flex-direction: column; min-height: 100%; }
+.landing-hero { background: #060C18; padding: 60px 40px; text-align: center; border-bottom: 1px solid #0C2340; }
+.landing-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 40px; background: #0A1120; border-bottom: 1px solid #1A2740; }
+.landing-features { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; padding: 32px 40px; }
+.feature-card { background: var(--su); border: 1px solid var(--bd); border-radius: 12px; padding: 20px; }
+.feature-icon { width: 36px; height: 36px; border-radius: 8px; background: #0C2340;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #22D3EE; }
+
+/* ── Live demo page ── */
+.live-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; background: #0C2340; color: #22D3EE; font-size: 11px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22D3EE;
+  animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.rhythm-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.rhythm-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--bd);
+  background: transparent; color: var(--tm); font-size: 12px; cursor: pointer; }
+.rhythm-btn.active { background: #0C2340; color: #22D3EE; border-color: #22D3EE; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     SCREEN NAVIGATION BAR
+     ══════════════════════════════════ -->
+<nav id="screen-nav">
+  <span>Screen:</span>
+  <button class="snav active" onclick="show('landing')">Landing</button>
+  <button class="snav" onclick="show('login')">Login</button>
+  <button class="snav" onclick="show('dashboard')">Dashboard</button>
+  <button class="snav" onclick="show('patients')">Patients</button>
+  <button class="snav" onclick="show('patient-detail')">Patient detail</button>
+  <button class="snav" onclick="show('add-patient')">Add patient</button>
+  <button class="snav" onclick="show('triage')">Triage result</button>
+  <button class="snav" onclick="show('live')">Live demo</button>
+  <button id="theme-toggle" onclick="toggleTheme()">☀ Light mode</button>
+</nav>
+
+<!-- ══════════════════════════════════
+     SCREEN 1 — LANDING PAGE
+     ══════════════════════════════════ -->
+<div id="s-landing" class="screen active" style="overflow-y:auto; display:block;">
+  <div class="landing">
+    <!-- Landing nav -->
+    <div class="landing-nav">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="sb-logo-icon">
+          <svg viewBox="0 0 24 24"><polyline points="2,12 6,12 9,4 12,20 15,8 18,16 21,12"/></svg>
+        </div>
+        <span style="color:#F1F5F9;font-size:15px;font-weight:500;">CardioTriage</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <a href="#" style="color:#64748B;font-size:13px;text-decoration:none;">About</a>
+        <a href="#" style="color:#64748B;font-size:13px;text-decoration:none;">Features</a>
+        <button class="btn-primary" onclick="show('login')">Sign in →</button>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="landing-hero">
+      <svg width="320" height="52" viewBox="0 0 320 52" style="margin-bottom:24px;display:block;margin-left:auto;margin-right:auto;">
+        <polyline points="0,26 30,26 42,8 50,44 58,4 66,46 74,26 120,26 132,8 140,44 148,4 156,46 164,26 210,26 222,8 230,44 238,4 246,46 254,26 320,26" stroke="#22D3EE" stroke-width="1.8" fill="none" opacity="0.7"/>
+      </svg>
+      <h1 style="color:#F1F5F9;font-size:32px;font-weight:500;line-height:1.25;margin-bottom:14px;">
+        Cardiac triage, <span style="color:#22D3EE;">instantly.</span>
+      </h1>
+      <p style="color:#64748B;font-size:15px;max-width:480px;margin:0 auto 28px;line-height:1.65;">
+        Upload a wearable ECG recording and receive a complete triage assessment — 
+        rhythm classification, vital signs, and severity grading in seconds.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn-primary" style="padding:10px 22px;font-size:14px;" onclick="show('login')">Get started →</button>
+        <button class="btn-secondary" style="padding:10px 22px;font-size:14px;border-color:#1A2740;color:#94A3B8;" onclick="show('triage')">See a result</button>
+      </div>
+      <p style="color:#3D5A7A;font-size:11px;margin-top:16px;">⚠ Educational project — not for clinical use</p>
+    </div>
+
+    <!-- Features -->
+    <div style="background:var(--bg);padding:0 0 20px;">
+      <div style="padding:28px 40px 0;"><p style="font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">What it does</p></div>
+      <div class="landing-features">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 6,12 9,4 12,20 15,8 18,16 21,12"/></svg>
+          </div>
+          <div style="font-size:14px;font-weight:500;color:var(--tx);margin-bottom:6px;">12-lead ECG analysis</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.6;">Detects AFib, bradycardia, tachycardia, and anomalies from single-lead wearable recordings.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div style="font-size:14px;font-weight:500;color:var(--tx);margin-bottom:6px;">Severity grading</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.6;">Three-tier triage: GREEN (normal), YELLOW (monitor), RED (urgent) with confidence scores.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div style="font-size:14px;font-weight:500;color:var(--tx);margin-bottom:6px;">Patient management</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.6;">Store patient records, track recording history, and review all results in one place.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2 — LOGIN
+     ══════════════════════════════════ -->
+<div id="s-login" class="screen" style="display:none;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;width:100%;height:100%;">
+    <!-- Left brand panel -->
+    <div style="background:#0A1120;padding:40px;display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:30px;">
+          <div class="sb-logo-icon">
+            <svg viewBox="0 0 24 24"><polyline points="2,12 6,12 9,4 12,20 15,8 18,16 21,12"/></svg>
+          </div>
+          <span style="color:#F1F5F9;font-size:15px;font-weight:500;">CardioTriage</span>
+        </div>
+        <svg width="240" height="46" viewBox="0 0 240 46" style="margin-bottom:24px;display:block;">
+          <polyline points="0,23 20,23 30,8 36,38 42,3 48,42 54,23 90,23 100,8 106,38 112,3 118,42 124,23 240,23" stroke="#22D3EE" stroke-width="1.6" fill="none" opacity="0.5"/>
+        </svg>
+        <h2 style="color:#F1F5F9;font-size:22px;font-weight:500;line-height:1.3;margin-bottom:10px;">
+          Clinical triage,<br>powered by AI.
+        </h2>
+        <p style="color:#3D5A7A;font-size:13px;line-height:1.65;">
+          Upload wearable ECG recordings and get instant triage assessment — severity, rhythm, and vital signs in seconds.
+        </p>
+      </div>
+      <div style="padding:10px 14px;border-radius:8px;background:#1A2740;border:1px solid #2D3F55;">
+        <p style="color:#FDE68A;font-size:11px;display:flex;align-items:center;gap:6px;">
+          ⚠ Educational project · Not for clinical use
+        </p>
+      </div>
+    </div>
+    <!-- Right form panel -->
+    <div style="background:#F8FAFC;padding:40px;display:flex;flex-direction:column;justify-content:center;">
+      <h2 style="font-size:20px;font-weight:500;color:#0F172A;margin-bottom:4px;">Sign in</h2>
+      <p style="font-size:13px;color:#64748B;margin-bottom:26px;">Enter your credentials to continue</p>
+      <div class="form-group" style="margin-bottom:14px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+        <label class="form-label" style="color:#374151;">Email address</label>
+        <input class="form-input" type="email" placeholder="doctor@hospital.org" style="border-color:#CBD5E1;background:#fff;color:#0F172A;">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+        <label class="form-label" style="color:#374151;">Password</label>
+        <input class="form-input" type="password" placeholder="••••••••" style="border-color:#CBD5E1;background:#fff;color:#0F172A;">
+      </div>
+      <button class="btn-primary" style="width:100%;padding:10px;font-size:13px;font-weight:500;justify-content:center;">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     APP SHELL (screens 3–8)
+     ══════════════════════════════════ -->
+<div id="app-screens" class="screen" style="display:none;">
+  <div class="app-shell" id="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <svg viewBox="0 0 24 24"><polyline points="2,12 6,12 9,4 12,20 15,8 18,16 21,12"/></svg>
+        </div>
+        <div><div class="sb-logo-name">CardioTriage</div><div class="sb-logo-sub">Clinical Platform</div></div>
+      </div>
+      <div class="sb-ecg">
+        <svg width="158" height="22" viewBox="0 0 158 22">
+          <polyline points="0,11 16,11 23,4 27,19 31,1 35,20 39,11 65,11 72,4 76,19 80,1 84,20 88,11 158,11" stroke="#22D3EE" stroke-width="1.2" fill="none" opacity="0.35"/>
+        </svg>
+      </div>
+      <nav class="sb-nav">
+        <a id="nav-dashboard" onclick="showApp('dashboard')" class="active">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a id="nav-patients" onclick="showApp('patients')">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Patients
+        </a>
+        <a id="nav-live" onclick="showApp('live')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 16.24a6 6 0 0 1 0-8.49"/><path d="M20.07 4.93a10 10 0 0 1 0 14.14"/><path d="M3.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+          Live Demo
+        </a>
+      </nav>
+      <div class="sb-bottom">
+        <div class="sb-user">
+          <div class="sb-avatar">Dr</div>
+          <div><div class="sb-user-name">Dr. Sarah Chen</div><div class="sb-user-role">CLINICIAN</div></div>
+        </div>
+        <button class="sb-theme-btn" onclick="toggleTheme()" id="sb-theme-btn">☀ Switch to light</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="warning-banner">
+        ⚠ Educational project — not for clinical use
+      </div>
+
+      <!-- ── DASHBOARD ── -->
+      <div id="app-dashboard" class="page-content" style="display:none;">
+        <div class="page-header">
+          <div><div class="page-title">Dashboard</div><div class="page-sub">Sunday, 15 June 2026</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-num">5</div>
+            <div class="stat-sub" style="color:#22C55E;">↑ 2 this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recordings</div>
+            <div class="stat-num">12</div>
+            <div class="stat-sub" style="color:#22C55E;">↑ 4 today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Critical Alerts</div>
+            <div class="stat-num" style="color:#FCA5A5;">1</div>
+            <div class="stat-sub" style="color:#FCA5A5;">⚠ Chidi Nwosu</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--bd);">
+            <div style="font-size:11px;font-weight:500;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;">Recent recordings</div>
+          </div>
+          <div style="padding:0 16px;">
+            <div class="activity-item">
+              <div class="act-avatar" style="background:#0C2340;color:#22D3EE;">CN</div>
+              <div style="flex:1;"><div style="font-size:13px;color:var(--tx);font-weight:500;">Chidi Nwosu</div><div style="font-size:11px;color:var(--tm);">AFib detected · 2h ago</div></div>
+              <span class="badge badge-red">RED</span>
+            </div>
+            <div class="activity-item">
+              <div class="act-avatar" style="background:#2D1B00;color:#FCD34D;">AO</div>
+              <div style="flex:1;"><div style="font-size:13px;color:var(--tx);font-weight:500;">Amara Okafor</div><div style="font-size:11px;color:var(--tm);">Tachycardia · 5h ago</div></div>
+              <span class="badge badge-yellow">YELLOW</span>
+            </div>
+            <div class="activity-item">
+              <div class="act-avatar" style="background:#052E16;color:#86EFAC;">FA</div>
+              <div style="flex:1;"><div style="font-size:13px;color:var(--tx);font-weight:500;">Fatima Al-Hassan</div><div style="font-size:11px;color:var(--tm);">Normal sinus · 1d ago</div></div>
+              <span class="badge badge-green">GREEN</span>
+            </div>
+            <div class="activity-item">
+              <div class="act-avatar" style="background:#052E16;color:#86EFAC;">EE</div>
+              <div style="flex:1;"><div style="font-size:13px;color:var(--tx);font-weight:500;">Emmanuel Eze</div><div style="font-size:11px;color:var(--tm);">Normal sinus · 5d ago</div></div>
+              <span class="badge badge-green">GREEN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PATIENTS LIST ── -->
+      <div id="app-patients" class="page-content" style="display:none;">
+        <div class="page-header">
+          <div><div class="page-title">Patients</div><div class="page-sub">5 records total</div></div>
+          <button class="btn-primary" onclick="showApp('add-patient')">+ Add patient</button>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search patients by name...">
+        </div>
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr><th style="width:28%;">Name</th><th style="width:11%;">Age</th><th style="width:16%;">Gender</th><th style="width:22%;">Last recording</th><th style="width:23%;">Status</th></tr>
+            </thead>
+            <tbody>
+              <tr onclick="showApp('patient-detail')">
+                <td style="font-weight:500;">Amara Okafor</td><td>54</td><td>Female</td><td style="color:var(--tm);font-size:12px;">2 hours ago</td>
+                <td><span class="badge badge-yellow">YELLOW</span></td>
+              </tr>
+              <tr onclick="showApp('triage')">
+                <td style="font-weight:500;">Chidi Nwosu</td><td>67</td><td>Male</td><td style="color:var(--tm);font-size:12px;">1 day ago</td>
+                <td><span class="badge badge-red">RED</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:500;">Fatima Al-Hassan</td><td>42</td><td>Female</td><td style="color:var(--tm);font-size:12px;">3 days ago</td>
+                <td><span class="badge badge-green">GREEN</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:500;">Emmanuel Eze</td><td>78</td><td>Male</td><td style="color:var(--tm);font-size:12px;">5 days ago</td>
+                <td><span class="badge badge-green">GREEN</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:500;">Ngozi Adeyemi</td><td>61</td><td>Female</td><td style="color:var(--tm);font-size:12px;">1 week ago</td>
+                <td><span class="badge badge-none">No result</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PATIENT DETAIL ── -->
+      <div id="app-patient-detail" class="page-content" style="display:none;">
+        <div class="page-header" style="margin-bottom:14px;">
+          <div>
+            <button class="btn-secondary" style="margin-bottom:8px;font-size:11px;" onclick="showApp('patients')">← Back to patients</button>
+            <div class="page-title">Amara Okafor</div>
+            <div class="page-sub">Patient #001 · Added 12 Jan 2026</div>
+          </div>
+          <button class="btn-secondary" onclick="showApp('add-patient')">✏ Edit patient</button>
+        </div>
+
+        <!-- Patient info card -->
+        <div class="card" style="margin-bottom:14px;">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--bd);">
+            <div style="font-size:12px;font-weight:500;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;">Patient information</div>
+          </div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Age</div><div style="font-size:14px;color:var(--tx);">54 years</div></div>
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Gender</div><div style="font-size:14px;color:var(--tx);">Female</div></div>
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Blood type</div><div style="font-size:14px;color:var(--tx);">O+</div></div>
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Conditions</div><div style="font-size:13px;color:var(--tx);">Hypertension, Type 2 Diabetes</div></div>
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Medications</div><div style="font-size:13px;color:var(--tx);">Lisinopril 10mg, Metformin 500mg</div></div>
+            <div><div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Emergency contact</div><div style="font-size:13px;color:var(--tx);">Emeka Okafor · +234 80 1234 5678</div></div>
+          </div>
+        </div>
+
+        <!-- Upload panel -->
+        <div class="upload-panel">
+          <div class="upload-title">Upload new recording</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div class="form-group">
+              <label class="form-label">ECG/PPG file (.json)</label>
+              <input class="form-input" type="file" accept=".json">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Device type</label>
+              <select class="form-select">
+                <option>generic_wearable</option>
+                <option>apple_watch</option>
+                <option>samsung_galaxy</option>
+                <option>fitbit_sense</option>
+                <option>garmin_venu</option>
+                <option>kardia_mobile</option>
+                <option>smartphone_camera</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="showApp('triage')">▶ Run triage</button>
+        </div>
+
+        <!-- Recordings table -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:500;color:var(--tx);">Recordings (3)</div>
+        </div>
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr><th style="width:28%;">Date uploaded</th><th style="width:22%;">Device</th><th style="width:22%;">Severity</th><th style="width:28%;">Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-size:12px;color:var(--tm);">Today at 09:14</td>
+                <td style="font-size:12px;">generic_wearable</td>
+                <td><span class="badge badge-yellow">YELLOW</span></td>
+                <td><button class="btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="showApp('triage')">View result →</button></td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;color:var(--tm);">Yesterday 14:30</td>
+                <td style="font-size:12px;">apple_watch</td>
+                <td><span class="badge badge-green">GREEN</span></td>
+                <td><button class="btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="showApp('triage')">View result →</button></td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;color:var(--tm);">3 days ago 10:05</td>
+                <td style="font-size:12px;">garmin_venu</td>
+                <td><span class="badge badge-green">GREEN</span></td>
+                <td><button class="btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="showApp('triage')">View result →</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ADD / EDIT PATIENT ── -->
+      <div id="app-add-patient" class="page-content" style="display:none;">
+        <div style="margin-bottom:14px;">
+          <button class="btn-secondary" style="margin-bottom:10px;font-size:11px;" onclick="showApp('patients')">← Back</button>
+          <div class="page-title">Add new patient</div>
+          <div class="page-sub">Fill in the patient's details below</div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Full name <span style="color:#EF4444;">*</span></label>
+              <input class="form-input" type="text" placeholder="e.g. Amara Okafor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age <span style="color:#EF4444;">*</span></label>
+              <input class="form-input" type="number" placeholder="e.g. 54" min="0" max="150">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-select">
+                <option value="">Select…</option>
+                <option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Blood type</label>
+              <select class="form-select">
+                <option value="">Select…</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Known conditions</label>
+              <textarea class="form-textarea" placeholder="e.g. Hypertension, Type 2 Diabetes"></textarea>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Current medications</label>
+              <textarea class="form-textarea" placeholder="e.g. Lisinopril 10mg, Metformin 500mg"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emergency contact name</label>
+              <input class="form-input" type="text" placeholder="e.g. Emeka Okafor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emergency contact phone</label>
+              <input class="form-input" type="tel" placeholder="e.g. +234 80 1234 5678">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="showApp('patient-detail')">Save patient</button>
+            <button class="btn-secondary" onclick="showApp('patients')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TRIAGE RESULT ── -->
+      <div id="app-triage" class="page-content" style="display:none;">
+        <div class="page-header" style="margin-bottom:12px;">
+          <div>
+            <button class="btn-secondary" style="margin-bottom:8px;font-size:11px;" onclick="showApp('patient-detail')">← Back to patient</button>
+            <div class="page-title">Triage Result</div>
+            <div class="page-sub">Chidi Nwosu · Today at 09:14 · generic_wearable</div>
+          </div>
+          <span class="badge badge-red" style="font-size:12px;padding:6px 14px;">⚠ RED · Emergency</span>
+        </div>
+
+        <div class="vitals-grid">
+          <div class="vital-card"><div class="vital-label">Heart Rate</div><div class="vital-val">112</div><div class="vital-unit">bpm</div></div>
+          <div class="vital-card"><div class="vital-label">SpO₂</div><div class="vital-val" style="color:#FCD34D;">94.2</div><div class="vital-unit">%</div></div>
+          <div class="vital-card"><div class="vital-label">HRV RMSSD</div><div class="vital-val">18.4</div><div class="vital-unit">ms</div></div>
+          <div class="vital-card"><div class="vital-label">Stress</div><div class="vital-val" style="color:#FCA5A5;">High</div><div class="vital-unit">level</div></div>
+        </div>
+
+        <div class="monitor">
+          <div class="monitor-hdr">
+            <span class="monitor-label">ECG · Lead II · 256 Hz</span>
+            <span class="monitor-tag">AFib detected</span>
+          </div>
+          <canvas id="ecg-c" width="700" height="80" style="width:100%;display:block;"></canvas>
+        </div>
+
+        <div class="monitor">
+          <div class="monitor-hdr">
+            <span class="monitor-label">PPG · 64 Hz</span>
+            <span style="font-size:10px;color:#64748B;">SpO₂ proxy channel</span>
+          </div>
+          <canvas id="ppg-c" width="700" height="55" style="width:100%;display:block;"></canvas>
+        </div>
+
+        <div class="rhythm-bars">
+          <div class="rhythm-title">Rhythm classification</div>
+          <div class="rhythm-row"><span class="rhythm-name">AFib</span><div class="rhythm-track"><div class="rhythm-fill" style="width:91%;background:#EF4444;"></div></div><span class="rhythm-pct">91%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">Tachycardia</span><div class="rhythm-track"><div class="rhythm-fill" style="width:5%;background:#F97316;"></div></div><span class="rhythm-pct">5%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">Normal</span><div class="rhythm-track"><div class="rhythm-fill" style="width:2%;background:#22C55E;"></div></div><span class="rhythm-pct">2%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">Anomaly</span><div class="rhythm-track"><div class="rhythm-fill" style="width:1%;background:#8B5CF6;"></div></div><span class="rhythm-pct">1%</span></div>
+          <div class="rhythm-row" style="margin-bottom:0;"><span class="rhythm-name">Bradycardia</span><div class="rhythm-track"><div class="rhythm-fill" style="width:1%;background:#06B6D4;"></div></div><span class="rhythm-pct">1%</span></div>
+        </div>
+      </div>
+
+      <!-- ── LIVE DEMO ── -->
+      <div id="app-live" class="page-content" style="display:none;">
+        <div class="page-header">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+              <div class="page-title">Live Demo</div>
+              <div class="live-badge"><div class="live-dot"></div>STREAMING</div>
+            </div>
+            <div class="page-sub">Synthetic ECG/PPG · Updates every 5 seconds</div>
+          </div>
+          <button class="btn-secondary">⏹ Stop</button>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;color:var(--tm);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Select rhythm:</div>
+          <div class="rhythm-selector">
+            <button class="rhythm-btn active">Normal</button>
+            <button class="rhythm-btn">AFib</button>
+            <button class="rhythm-btn">Bradycardia</button>
+            <button class="rhythm-btn">Tachycardia</button>
+            <button class="rhythm-btn">Anomaly</button>
+          </div>
+        </div>
+
+        <div class="vitals-grid">
+          <div class="vital-card"><div class="vital-label">Heart Rate</div><div class="vital-val" id="live-hr">78</div><div class="vital-unit">bpm</div></div>
+          <div class="vital-card"><div class="vital-label">SpO₂</div><div class="vital-val" id="live-spo2">98.1</div><div class="vital-unit">%</div></div>
+          <div class="vital-card"><div class="vital-label">HRV RMSSD</div><div class="vital-val" id="live-hrv">34.2</div><div class="vital-unit">ms</div></div>
+          <div class="vital-card"><div class="vital-label">Severity</div><div class="vital-val" id="live-sev" style="color:#86EFAC;">GREEN</div><div class="vital-unit">status</div></div>
+        </div>
+
+        <div class="monitor">
+          <div class="monitor-hdr">
+            <span class="monitor-label">ECG · Live · 256 Hz</span>
+            <span id="live-rhythm-tag" class="monitor-tag">Normal sinus</span>
+          </div>
+          <canvas id="live-ecg-c" width="700" height="80" style="width:100%;display:block;"></canvas>
+        </div>
+
+        <div class="monitor" style="margin-bottom:14px;">
+          <div class="monitor-hdr">
+            <span class="monitor-label">PPG · Live · 64 Hz</span>
+          </div>
+          <canvas id="live-ppg-c" width="700" height="55" style="width:100%;display:block;"></canvas>
+        </div>
+
+        <div class="rhythm-bars">
+          <div class="rhythm-title">Live classification</div>
+          <div class="rhythm-row"><span class="rhythm-name">Normal</span><div class="rhythm-track"><div id="lb-normal" class="rhythm-fill" style="width:88%;background:#22C55E;"></div></div><span class="rhythm-pct" id="lp-normal">88%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">AFib</span><div class="rhythm-track"><div id="lb-afib" class="rhythm-fill" style="width:5%;background:#EF4444;"></div></div><span class="rhythm-pct" id="lp-afib">5%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">Tachycardia</span><div class="rhythm-track"><div id="lb-tachy" class="rhythm-fill" style="width:4%;background:#F97316;"></div></div><span class="rhythm-pct" id="lp-tachy">4%</span></div>
+          <div class="rhythm-row"><span class="rhythm-name">Bradycardia</span><div class="rhythm-track"><div id="lb-brady" class="rhythm-fill" style="width:2%;background:#06B6D4;"></div></div><span class="rhythm-pct" id="lp-brady">2%</span></div>
+          <div class="rhythm-row" style="margin-bottom:0;"><span class="rhythm-name">Anomaly</span><div class="rhythm-track"><div id="lb-anom" class="rhythm-fill" style="width:1%;background:#8B5CF6;"></div></div><span class="rhythm-pct" id="lp-anom">1%</span></div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app-shell -->
+</div><!-- /app-screens -->
+
+<script>
+let isDark = true;
+let currentAppPage = 'dashboard';
+
+/* ── Screen navigation ── */
+function show(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.snav').forEach(b => b.classList.remove('active'));
+
+  if (screen === 'login') {
+    document.getElementById('s-login').style.display = 'flex';
+  } else if (screen === 'landing') {
+    document.getElementById('s-landing').style.display = 'block';
+  } else {
+    document.getElementById('app-screens').style.display = 'flex';
+    showApp(screen);
+  }
+
+  const btn = document.querySelector(`.snav[onclick="show('${screen}')"]`);
+  if (btn) btn.classList.add('active');
+}
+
+/* ── In-app page navigation ── */
+function showApp(page) {
+  const appPages = ['dashboard', 'patients', 'patient-detail', 'add-patient', 'triage', 'live'];
+  appPages.forEach(p => {
+    const el = document.getElementById('app-' + p);
+    if (el) el.style.display = p === page ? 'block' : 'none';
+  });
+
+  // Update sidebar active states
+  const navMap = { dashboard: 'nav-dashboard', patients: 'nav-patients', 'patient-detail': 'nav-patients', 'add-patient': 'nav-patients', triage: 'nav-patients', live: 'nav-live' };
+  document.querySelectorAll('.sb-nav a').forEach(a => a.classList.remove('active'));
+  const activeNav = document.getElementById(navMap[page]);
+  if (activeNav) activeNav.classList.add('active');
+
+  currentAppPage = page;
+
+  if (page === 'triage') { setTimeout(() => { drawECG('ecg-c', false); drawPPG('ppg-c'); }, 60); }
+  if (page === 'live') { setTimeout(() => { drawECG('live-ecg-c', true); drawPPG('live-ppg-c'); }, 60); }
+}
+
+/* ── Theme toggle ── */
+function toggleTheme() {
+  isDark = !isDark;
+  const shell = document.getElementById('app-shell');
+  if (isDark) {
+    shell.setAttribute('data-dark', '');
+    document.getElementById('theme-toggle').textContent = '☀ Light mode';
+    document.getElementById('sb-theme-btn').textContent = '☀ Switch to light';
+  } else {
+    shell.removeAttribute('data-dark');
+    document.getElementById('theme-toggle').textContent = '🌙 Dark mode';
+    document.getElementById('sb-theme-btn').textContent = '🌙 Switch to dark';
+  }
+  if (currentAppPage === 'triage') setTimeout(() => { drawECG('ecg-c', false); drawPPG('ppg-c'); }, 30);
+  if (currentAppPage === 'live') setTimeout(() => { drawECG('live-ecg-c', true); drawPPG('live-ppg-c'); }, 30);
+}
+
+/* ── ECG canvas ── */
+function drawECG(id, isAfib) {
+  const c = document.getElementById(id); if (!c) return;
+  const ctx = c.getContext('2d'), w = c.width, h = c.height, mid = h * 0.55;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(34,211,238,0.07)'; ctx.lineWidth = 0.5;
+  for (let x = 0; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.strokeStyle = '#22D3EE'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, mid);
+
+  if (isAfib) {
+    const beats = [0, 62, 116, 182, 258, 310, 376, 438, 502, 560, 624, 690];
+    beats.forEach((bx) => {
+      if (bx >= w) return;
+      for (let n = 0; n < 10; n++) ctx.lineTo(bx + n * 5, mid + (Math.random() - .5) * 5);
+      if (bx + 22 < w) { ctx.lineTo(bx + 9, mid + 5); ctx.lineTo(bx + 13, mid - h * .5); ctx.lineTo(bx + 17, mid + 8); ctx.lineTo(bx + 22, mid); }
+    });
+  } else {
+    const bw = 90;
+    for (let b = 0; b < w / bw + 1; b++) {
+      const bx = b * bw;
+      ctx.lineTo(bx + 10, mid);
+      ctx.quadraticCurveTo(bx + 15, mid - 8, bx + 20, mid);
+      ctx.lineTo(bx + 25, mid + 5); ctx.lineTo(bx + 29, mid - h * .5); ctx.lineTo(bx + 33, mid + 8); ctx.lineTo(bx + 38, mid);
+      ctx.quadraticCurveTo(bx + 50, mid - 14, bx + 60, mid);
+      ctx.lineTo(bx + bw, mid);
+    }
+  }
+  ctx.lineTo(w, mid); ctx.stroke();
+}
+
+/* ── PPG canvas ── */
+function drawPPG(id) {
+  const c = document.getElementById(id); if (!c) return;
+  const ctx = c.getContext('2d'), w = c.width, h = c.height, mid = h * 0.6;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(249,115,22,0.12)'; ctx.lineWidth = 0.5;
+  for (let x = 0; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  ctx.strokeStyle = '#F97316'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, mid);
+  const bw = 68;
+  for (let b = 0; b < w / bw + 1; b++) {
+    const bx = b * bw;
+    ctx.lineTo(bx + 8, mid);
+    ctx.quadraticCurveTo(bx + 14, mid - h * .65, bx + 18, mid - h * .55);
+    ctx.quadraticCurveTo(bx + 24, mid - h * .18, bx + 28, mid - h * .26);
+    ctx.quadraticCurveTo(bx + 46, mid + h * .08, bx + bw, mid);
+  }
+  ctx.stroke();
+}
+
+/* ── Rhythm selector on live demo ── */
+document.querySelectorAll('.rhythm-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.rhythm-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const rhythm = this.textContent;
+    const isAfib = rhythm === 'AFib';
+    drawECG('live-ecg-c', isAfib);
+    drawPPG('live-ppg-c');
+    document.getElementById('live-rhythm-tag').textContent = rhythm + ' pattern';
+  });
+});
+
+/* ── Init ── */
+show('landing');
+document.getElementById('app-shell').setAttribute('data-dark', '');
+showApp('dashboard');
+</script>
+</body>
+</html>

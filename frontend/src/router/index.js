@@ -12,6 +12,7 @@ import LiveDemoPage from '../pages/LiveDemoPage.vue'
 
 const routes = [
   { path: '/', name: 'landing', component: LandingPage },
+  { path: '/team', name: 'team', component: () => import('../pages/TeamPage.vue') },
   { path: '/login', name: 'login', component: LoginPage },
   { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true } },
   { path: '/patients', name: 'patients', component: PatientsPage, meta: { requiresAuth: true } },

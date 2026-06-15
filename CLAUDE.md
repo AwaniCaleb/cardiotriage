@@ -23,8 +23,20 @@ Vue.js (Vercel) → Spring Boot REST API (Render) → PostgreSQL (Neon)
 cardiotriage/
 ├── backend/          Java Spring Boot REST API
 ├── frontend/         Vue.js + Vite + Tailwind
+│   └── src/
+│       ├── api/          Axios API client modules
+│       ├── layouts/      AppLayout, PublicLayout
+│       ├── pages/        One .vue file per route
+│       ├── router/       Vue Router config
+│       ├── stores/       Pinia state stores
+│       └── utils/        Shared helpers
 ├── ml-service/       Python FastAPI + triage model
-│   └── triage_model.pt  Pre-traced TorchScript model
+│   ├── main.py           FastAPI app, /health /triage /triage/stream
+│   ├── inference.py      TorchScript model loader + run_inference()
+│   ├── preprocessor.py   ECG/PPG normalisation, feature extraction
+│   ├── generator.py      Synthetic signal generator for live demo
+│   ├── requirements.txt
+│   └── triage_model.pt   Pre-traced TorchScript model (do not retrain here)
 ├── notebooks/        Original Jupyter notebook (do not modify)
 └── CLAUDE.md
 ```
@@ -48,13 +60,14 @@ DB_USERNAME=postgres
 DB_PASSWORD=yourpassword
 JWT_SECRET=cardiotriage-dev-secret-change-in-production
 ML_SERVICE_URL=http://localhost:8000
-CORS_ORIGINS=http://localhost:5173
-UPLOAD_DIR=./uploads
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+FILE_UPLOAD_DIR=./uploads
 ```
 
 ### ml-service/
 ```
 MODEL_PATH=./triage_model.pt
+PORT=8000
 ```
 
 ## JDK 25 Fix (Already Applied)
@@ -70,7 +83,7 @@ recordings     (id, patient_id, device_type, ecg_file_path,
                 ppg_file_path, uploaded_at)
 triage_results (id, recording_id, severity, severity_score,
                 rhythm_label, rhythm_probs, heart_rate,
-                hrv_rmssd, spo2, stress_level, created_at)
+                hrv_rmssd, spo2, stress_level, stress_probs, created_at)
 ```
 
 ## API Endpoints
@@ -85,25 +98,24 @@ PUT    /api/patients/{id}
 DELETE /api/patients/{id}
 
 POST   /api/recordings/upload
-GET    /api/recordings/{id}
+GET    /api/recordings/{id}/signals   Raw ECG/PPG arrays for chart rendering
 GET    /api/patients/{id}/recordings
 
 GET    /api/triage/{recordingId}
-GET    /api/triage/stream          SSE live demo endpoint
+GET    /api/triage/stream             SSE live demo endpoint
 
 GET    /api/dashboard/stats
 ```
 
 ## Build Commands
 ```bash
-# Backend
-mvn compile -f backend/pom.xml
-mvn spring-boot:run -f backend/pom.xml
+# Backend (local profile loads application-local.properties with Neon credentials)
+SPRING_PROFILES_ACTIVE=local ./backend/mvnw spring-boot:run -f backend/pom.xml
 
-# Frontend (once scaffolded)
+# Frontend
 cd frontend && npm run dev
 
-# ML Service (once scaffolded)
+# ML Service
 cd ml-service && uvicorn main:app --reload --port 8000
 ```
 
@@ -112,17 +124,20 @@ cd ml-service && uvicorn main:app --reload --port 8000
 - [x] TorchScript model exported (triage_model.pt in ml-service/)
 - [x] Spring Boot scaffold (pom.xml, main class, application.properties)
 - [x] JWT auth system (User, JwtUtil, JwtAuthFilter, SecurityConfig,
-      AuthService, AuthController)
+      AuthService, AuthController) — auth errors return 400/401/409, not 500
 - [x] Patient CRUD (Patient, PatientRepository, PatientRequest/Response/Summary,
-      PatientService, PatientController)
-- [ ] Recording upload
-- [ ] Python ML service
-- [ ] Triage results
-- [ ] Vue frontend
-- [ ] Dashboard
-- [ ] Landing page
-- [ ] Live SSE demo
+      PatientService, PatientController) — cascade-deletes recordings + triage on delete
+- [x] Recording upload (Recording, RecordingController, RecordingService)
+- [x] Python ML service (main.py, inference.py, preprocessor.py, generator.py)
+- [x] Triage results (TriageResult, TriageResultRepository, GET /api/triage/{recordingId})
+- [x] Vue frontend (13 pages: Landing, Login, Dashboard, Patients, Add/Edit/Detail,
+      TriageResult, LiveDemo, Team — plus AppLayout/PublicLayout, router, stores, api)
+- [x] Dashboard (DashboardController → /api/dashboard/stats, DashboardPage.vue)
+- [x] Landing page (LandingPage.vue)
+- [x] Live SSE demo (TriageStreamController, LiveDemoPage.vue)
 
 ## What To Build Next
-Recording upload — patient ECG/PPG file upload endpoint and
-recordings entity, then wire into Vue after the frontend is scaffolded.
+- [ ] Wire recording upload form in frontend to POST /api/recordings/upload
+- [ ] Display triage results page after upload (TriageResultPage.vue ↔ GET /api/triage/{id})
+- [ ] Render ECG/PPG waveforms in frontend using GET /api/recordings/{id}/signals + Chart.js
+- [ ] Deployment: Render services (backend + ml-service), Vercel (frontend), env vars

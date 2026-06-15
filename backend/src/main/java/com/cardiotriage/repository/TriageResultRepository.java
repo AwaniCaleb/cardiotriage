@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface TriageResultRepository extends JpaRepository<TriageResult, Long> {
 
     Optional<TriageResult> findByRecordingId(Long recordingId);
+
+    long countBySeverity(String severity);
 }

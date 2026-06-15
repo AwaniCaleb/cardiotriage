@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +90,40 @@ public class RecordingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Triage result not found for recording id: " + recordingId));
 
         return toTriageResultResponse(triageResult);
+    }
+
+    public Map<String, Object> getSignals(Long recordingId) {
+        Recording recording = recordingRepository.findById(recordingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recording not found with id: " + recordingId));
+
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String content = Files.readString(Paths.get(recording.getEcgFilePath()));
+            JsonNode signalJson = objectMapper.readTree(content);
+
+            List<Double> ecgSignal = objectMapper.convertValue(signalJson.get("ecg_signal"), new TypeReference<List<Double>>() {});
+            List<Double> ppgSignal = objectMapper.convertValue(signalJson.get("ppg_signal"), new TypeReference<List<Double>>() {});
+
+            result.put("ecg", downsample(ecgSignal));
+            result.put("ppg", downsample(ppgSignal));
+        } catch (IOException e) {
+            result.put("ecg", List.of());
+            result.put("ppg", List.of());
+        }
+        return result;
+    }
+
+    private List<Double> downsample(List<Double> data) {
+        int size = data.size();
+        if (size == 0) {
+            return data;
+        }
+        int stride = Math.max(1, size / 512);
+        List<Double> result = new ArrayList<>();
+        for (int i = 0; i < size; i += stride) {
+            result.add(data.get(i));
+        }
+        return result;
     }
 
     private Path storeFile(MultipartFile file) {

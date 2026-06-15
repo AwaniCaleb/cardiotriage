@@ -6,3 +6,4 @@ scipy
 sse-starlette
 python-multipart
 pydantic
+python-dotenv

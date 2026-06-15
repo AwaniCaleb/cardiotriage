@@ -226,3 +226,9 @@ target/
 .idea/
 *.iml
 .vscode/
+
+# Local environment files — never commit these
+backend/src/main/resources/application-local.properties
+ml-service/.env
+backend/uploads/
+*.env.local

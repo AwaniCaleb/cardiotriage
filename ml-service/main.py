@@ -16,6 +16,9 @@ from preprocessor import ECG_LEN, PPG_LEN, RHYTHM_CLASSES
 from generator import generate_ecg, generate_ppg, get_demo_vitals
 from inference import run_inference
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI(title="CardioTriage ML Service")
 
 # CORS: allow all origins for now (we lock this down at deployment)

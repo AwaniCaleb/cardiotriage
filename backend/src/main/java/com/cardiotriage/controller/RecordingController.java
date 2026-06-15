@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -41,5 +42,10 @@ public class RecordingController {
     @GetMapping("/triage/{recordingId}")
     public ResponseEntity<TriageResultResponse> getTriageResult(@PathVariable Long recordingId) {
         return ResponseEntity.ok(recordingService.getTriageResult(recordingId));
+    }
+
+    @GetMapping("/recordings/{id}/signals")
+    public ResponseEntity<Map<String, Object>> getSignals(@PathVariable Long id) {
+        return ResponseEntity.ok(recordingService.getSignals(id));
     }
 }

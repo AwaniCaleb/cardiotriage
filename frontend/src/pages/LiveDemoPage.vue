@@ -52,11 +52,13 @@ function redraw() {
   })
 }
 
+const apiBase = import.meta.env.VITE_API_URL || '/api'
+
 function connect(rhythm) {
   if (eventSource) eventSource.close()
   streaming.value = true
 
-  eventSource = new EventSource(`/api/triage/stream?rhythm=${encodeURIComponent(rhythm)}`)
+  eventSource = new EventSource(`${apiBase}/triage/stream?rhythm=${encodeURIComponent(rhythm)}`)
 
   eventSource.addEventListener('triage', (e) => {
     try {

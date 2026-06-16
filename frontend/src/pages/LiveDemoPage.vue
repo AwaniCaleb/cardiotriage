@@ -80,12 +80,11 @@ function nextPpgSample() {
   return Math.max(0, 0.6 * Math.pow(1 - (beatT - 0.28) / 0.52, 1.5))
 }
 
-// ── sweep state (plain JS, not reactive) ─────────────────────────────────────
+// ── strip chart state (plain JS, not reactive) ───────────────────────────────
 let ecgDrawX = 0
 let ppgDrawX = 0
-const ECG_PX_PER_FRAME  = 3
-const PPG_PX_PER_FRAME  = 1
-const ERASE_ZONE_WIDTH  = 20
+const ECG_PX_PER_FRAME = 3
+const PPG_PX_PER_FRAME = 3
 
 function initCanvas(canvas, height) {
   canvas.width  = canvas.offsetWidth
@@ -95,67 +94,79 @@ function initCanvas(canvas, height) {
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 }
 
-// ── sweep drawing ─────────────────────────────────────────────────────────────
-function sweepECG() {
+// ── strip chart drawing ───────────────────────────────────────────────────────
+function stripECG() {
   const canvas = ecgCanvas.value
-  if (!canvas) return
+  if (!canvas || !canvas.width) return
   const ctx = canvas.getContext('2d')
   const w   = canvas.width
   const h   = canvas.height
   const mid = h * 0.55
 
-  // erase zone ahead of cursor
-  const eraseX = (ecgDrawX + ECG_PX_PER_FRAME) % w
-  ctx.fillStyle = '#060C18'
-  ctx.fillRect(eraseX, 0, ERASE_ZONE_WIDTH, h)
-
-  // subtle grid dots in erase zone
-  ctx.fillStyle = 'rgba(34,211,238,0.07)'
-  for (let gx = 0; gx < ERASE_ZONE_WIDTH; gx += 50) {
-    for (let gy = 0; gy < h; gy += 20) {
-      ctx.fillRect(eraseX + gx, gy, 1, 1)
+  if (ecgDrawX < w) {
+    // Phase 1: trace left to right
+    ctx.strokeStyle = '#22D3EE'
+    ctx.lineWidth   = 1.5
+    ctx.beginPath()
+    for (let i = 0; i < ECG_PX_PER_FRAME; i++) {
+      const x = ecgDrawX + i
+      const y = mid - nextEcgSample(currentRhythm) * h * 0.38
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
     }
+    ctx.stroke()
+    ecgDrawX += ECG_PX_PER_FRAME
+  } else {
+    // Phase 2: scroll canvas left, append on right
+    ctx.drawImage(canvas, -ECG_PX_PER_FRAME, 0)
+    ctx.fillStyle = '#060C18'
+    ctx.fillRect(w - ECG_PX_PER_FRAME - 1, 0, ECG_PX_PER_FRAME + 1, h)
+    ctx.strokeStyle = '#22D3EE'
+    ctx.lineWidth   = 1.5
+    ctx.beginPath()
+    for (let i = 0; i < ECG_PX_PER_FRAME; i++) {
+      const x = w - ECG_PX_PER_FRAME + i
+      const y = mid - nextEcgSample(currentRhythm) * h * 0.38
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.stroke()
   }
-
-  // new signal pixels at cursor
-  ctx.strokeStyle = '#22D3EE'
-  ctx.lineWidth   = 1.5
-  ctx.beginPath()
-  for (let i = 0; i < ECG_PX_PER_FRAME; i++) {
-    const x = (ecgDrawX + i) % w
-    const y = mid - nextEcgSample(currentRhythm) * h * 0.38
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-  }
-  ctx.stroke()
-
-  ecgDrawX = (ecgDrawX + ECG_PX_PER_FRAME) % w
 }
 
-function sweepPPG() {
+function stripPPG() {
   const canvas = ppgCanvas.value
-  if (!canvas) return
+  if (!canvas || !canvas.width) return
   const ctx = canvas.getContext('2d')
   const w   = canvas.width
   const h   = canvas.height
   const mid = h * 0.6
 
-  // erase zone ahead of cursor
-  const eraseX = (ppgDrawX + PPG_PX_PER_FRAME) % w
-  ctx.fillStyle = '#060C18'
-  ctx.fillRect(eraseX, 0, ERASE_ZONE_WIDTH, h)
-
-  // new signal pixels at cursor
-  ctx.strokeStyle = '#F97316'
-  ctx.lineWidth   = 1.5
-  ctx.beginPath()
-  for (let i = 0; i < PPG_PX_PER_FRAME; i++) {
-    const x = (ppgDrawX + i) % w
-    const y = mid - nextPpgSample() * h * 0.55
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  if (ppgDrawX < w) {
+    // Phase 1: trace left to right
+    ctx.strokeStyle = '#F97316'
+    ctx.lineWidth   = 1.5
+    ctx.beginPath()
+    for (let i = 0; i < PPG_PX_PER_FRAME; i++) {
+      const x = ppgDrawX + i
+      const y = mid - nextPpgSample() * h * 0.55
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+    ppgDrawX += PPG_PX_PER_FRAME
+  } else {
+    // Phase 2: scroll canvas left, append on right
+    ctx.drawImage(canvas, -PPG_PX_PER_FRAME, 0)
+    ctx.fillStyle = '#060C18'
+    ctx.fillRect(w - PPG_PX_PER_FRAME - 1, 0, PPG_PX_PER_FRAME + 1, h)
+    ctx.strokeStyle = '#F97316'
+    ctx.lineWidth   = 1.5
+    ctx.beginPath()
+    for (let i = 0; i < PPG_PX_PER_FRAME; i++) {
+      const x = w - PPG_PX_PER_FRAME + i
+      const y = mid - nextPpgSample() * h * 0.55
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.stroke()
   }
-  ctx.stroke()
-
-  ppgDrawX = (ppgDrawX + PPG_PX_PER_FRAME) % w
 }
 
 // ── animation loop ────────────────────────────────────────────────────────────
@@ -163,8 +174,8 @@ let animFrameId   = null
 let currentRhythm = 'Normal'
 
 function animationLoop() {
-  sweepECG()
-  sweepPPG()
+  stripECG()
+  stripPPG()
   animFrameId = requestAnimationFrame(animationLoop)
 }
 

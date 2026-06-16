@@ -2,9 +2,11 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 
 function applyDark(isDark) {
   if (isDark) {
@@ -20,6 +22,11 @@ watch(() => themeStore.isDark, applyDark)
 const isPatientsActive = computed(() =>
   route.path.startsWith('/patients') || route.path.startsWith('/recordings')
 )
+
+const avatarInitials = computed(() => {
+  const local = (authStore.userEmail || '').split('@')[0]
+  return local.slice(0, 2).toUpperCase() || '??'
+})
 </script>
 
 <template>
@@ -61,10 +68,10 @@ const isPatientsActive = computed(() =>
 
       <div class="sb-bottom">
         <div class="sb-user">
-          <div class="sb-avatar">Dr</div>
+          <div class="sb-avatar">{{ avatarInitials }}</div>
           <div>
-            <div class="sb-user-name">Dr. Sarah Chen</div>
-            <div class="sb-user-role">CLINICIAN</div>
+            <div class="sb-user-name">{{ authStore.userEmail }}</div>
+            <div class="sb-user-role">{{ authStore.userRole ?? 'CLINICIAN' }}</div>
           </div>
         </div>
         <button class="sb-theme-btn" @click="themeStore.toggle">

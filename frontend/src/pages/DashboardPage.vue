@@ -5,6 +5,7 @@ import api from '../api'
 import { avatarColors, formatRelativeTime, initials, rhythmDescription, severityBadgeClass } from '../utils/format'
 
 const loading = ref(true)
+const statsApi = ref(null)   // { totalPatients, totalRecordings, criticalAlerts } from API
 const patients = ref([])
 const recordings = ref([])
 
@@ -19,12 +20,13 @@ function daysAgo(dateStr) {
 
 const stats = computed(() => {
   const criticalRecordings = recordings.value.filter((r) => r.triageResult?.severity === 'RED')
+  // prefer exact counts from the stats endpoint; fall back to locally-computed values
   return {
-    totalPatients: patients.value.length,
-    totalRecordings: recordings.value.length,
-    critical: criticalRecordings.length,
+    totalPatients:   statsApi.value?.totalPatients   ?? patients.value.length,
+    totalRecordings: statsApi.value?.totalRecordings ?? recordings.value.length,
+    critical:        statsApi.value?.criticalAlerts  ?? criticalRecordings.length,
     criticalPatient: criticalRecordings[0]?.patientName ?? null,
-    newPatients: patients.value.filter((p) => daysAgo(p.createdAt) < 7).length,
+    newPatients:     patients.value.filter((p) => daysAgo(p.createdAt) < 7).length,
     recordingsToday: recordings.value.filter((r) => daysAgo(r.uploadedAt) < 1).length,
   }
 })
@@ -36,26 +38,30 @@ const recentRecordings = computed(() =>
 )
 
 onMounted(async () => {
-  try {
-    const { data: patientList } = await api.get('/patients')
-    patients.value = patientList
+  // fire stats + patient list in parallel
+  const [statsRes, patientsRes] = await Promise.allSettled([
+    api.get('/dashboard/stats'),
+    api.get('/patients'),
+  ])
 
+  if (statsRes.status === 'fulfilled') {
+    statsApi.value = statsRes.value.data   // { totalPatients, totalRecordings, criticalAlerts }
+  }
+
+  if (patientsRes.status === 'fulfilled') {
+    patients.value = patientsRes.value.data
+    // fetch per-patient recordings for the recent-activity list
     const all = []
-    for (const p of patientList) {
+    for (const p of patients.value) {
       try {
         const { data: recs } = await api.get(`/patients/${p.id}/recordings`)
         recs.forEach((r) => all.push({ ...r, patientName: p.name }))
-      } catch {
-        // skip patients whose recordings fail to load
-      }
+      } catch { /* skip */ }
     }
     recordings.value = all
-  } catch {
-    patients.value = []
-    recordings.value = []
-  } finally {
-    loading.value = false
   }
+
+  loading.value = false
 })
 </script>
 

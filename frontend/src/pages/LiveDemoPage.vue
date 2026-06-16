@@ -22,10 +22,12 @@ const hrvRmssd        = ref(34.2)
 const severity        = ref('GREEN')
 const rhythmLabel     = ref('Normal')
 const rhythmProbs     = ref({ Normal: 0.88, AFib: 0.05, Tachycardia: 0.04, Bradycardia: 0.02, Anomaly: 0.01 })
-const canvasWidth     = ref(700)
 
 const ecgCanvas = ref(null)
 const ppgCanvas = ref(null)
+
+// plain JS — not reactive, so Vue re-renders can't touch it
+const rhythmCache = {}
 
 const severityColor = computed(() => {
   switch (severity.value) {
@@ -168,6 +170,16 @@ function parseRhythmProbs(raw) {
   return raw
 }
 
+function applyTriageData(data) {
+  heartRate.value   = data.heart_rate
+  spo2.value        = data.spo2
+  hrvRmssd.value    = data.hrv_rmssd
+  severity.value    = data.severity
+  rhythmLabel.value = data.rhythm_label
+  rhythmProbs.value = parseRhythmProbs(data.rhythm_probs)
+  currentRhythm     = data.rhythm_label ?? currentRhythm
+}
+
 function connect(rhythm) {
   if (eventSource) eventSource.close()
   streaming.value = true
@@ -176,14 +188,18 @@ function connect(rhythm) {
 
   eventSource.addEventListener('triage', (e) => {
     try {
-      const data     = JSON.parse(e.data)
-      heartRate.value  = data.heart_rate
-      spo2.value       = data.spo2
-      hrvRmssd.value   = data.hrv_rmssd
-      severity.value   = data.severity
-      rhythmLabel.value = data.rhythm_label
-      rhythmProbs.value = parseRhythmProbs(data.rhythm_probs)
-      currentRhythm    = data.rhythm_label ?? currentRhythm
+      const data  = JSON.parse(e.data)
+      applyTriageData(data)
+      const label = data.rhythm_label ?? currentRhythm
+      rhythmCache[label] = {
+        heart_rate:   data.heart_rate,
+        spo2:         data.spo2,
+        hrv_rmssd:    data.hrv_rmssd,
+        severity:     data.severity,
+        rhythm_label: data.rhythm_label,
+        rhythm_probs: data.rhythm_probs,
+        stress_level: data.stress_level,
+      }
     } catch { /* ignore malformed event */ }
   })
 }
@@ -191,6 +207,7 @@ function connect(rhythm) {
 function selectRhythm(rhythm) {
   selectedRhythm.value = rhythm
   currentRhythm        = rhythm
+  if (rhythmCache[rhythm]) applyTriageData(rhythmCache[rhythm])
   connect(rhythm)
 }
 
@@ -201,7 +218,10 @@ function stopStream() {
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
-  canvasWidth.value = Math.max(400, window.innerWidth - 220)
+  ecgCanvas.value.width  = ecgCanvas.value.offsetWidth || window.innerWidth - 220
+  ecgCanvas.value.height = 80
+  ppgCanvas.value.width  = ppgCanvas.value.offsetWidth || window.innerWidth - 220
+  ppgCanvas.value.height = 55
   animationLoop()
   connect(selectedRhythm.value)
 })
@@ -267,14 +287,14 @@ onUnmounted(() => {
         <span class="monitor-label">ECG · Live · 256 Hz</span>
         <span class="monitor-tag">{{ rhythmDescription(rhythmLabel) }}</span>
       </div>
-      <canvas ref="ecgCanvas" :width="canvasWidth" height="80" style="width:100%;display:block;"></canvas>
+      <canvas ref="ecgCanvas" style="width:100%;height:80px;display:block;"></canvas>
     </div>
 
     <div class="monitor" style="margin-bottom:14px;">
       <div class="monitor-hdr">
         <span class="monitor-label">PPG · Live · 64 Hz</span>
       </div>
-      <canvas ref="ppgCanvas" :width="canvasWidth" height="55" style="width:100%;display:block;"></canvas>
+      <canvas ref="ppgCanvas" style="width:100%;height:55px;display:block;"></canvas>
     </div>
 
     <div class="rhythm-bars">

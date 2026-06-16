@@ -14,7 +14,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private static final long EXPIRATION_MS = 1000L * 60 * 60; // 1 hour
+    private static final long EXPIRATION_MS = 86400000L; // 24 hours
 
     @Value("${jwt.secret:cardiotriage-dev-secret-change-in-production}")
     private String secret;

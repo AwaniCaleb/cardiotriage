@@ -80,16 +80,23 @@ function nextPpgSample() {
   return Math.max(0, 0.6 * Math.pow(1 - (beatT - 0.28) / 0.52, 1.5))
 }
 
-// ── circular buffers ─────────────────────────────────────────────────────────
-const ECG_BUFFER_SIZE = 1024
-const PPG_BUFFER_SIZE = 256
-const ecgBuffer = new Float32Array(ECG_BUFFER_SIZE)
-const ppgBuffer = new Float32Array(PPG_BUFFER_SIZE)
-let ecgHead = 0
-let ppgHead = 0
+// ── sweep state (plain JS, not reactive) ─────────────────────────────────────
+let ecgDrawX = 0
+let ppgDrawX = 0
+const ECG_PX_PER_FRAME  = 3
+const PPG_PX_PER_FRAME  = 1
+const ERASE_ZONE_WIDTH  = 20
 
-// ── drawing ───────────────────────────────────────────────────────────────────
-function drawScrollingECG() {
+function initCanvas(canvas, height) {
+  canvas.width  = canvas.offsetWidth
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#060C18'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+}
+
+// ── sweep drawing ─────────────────────────────────────────────────────────────
+function sweepECG() {
   const canvas = ecgCanvas.value
   if (!canvas) return
   const ctx = canvas.getContext('2d')
@@ -97,66 +104,67 @@ function drawScrollingECG() {
   const h   = canvas.height
   const mid = h * 0.55
 
-  ctx.clearRect(0, 0, w, h)
+  // erase zone ahead of cursor
+  const eraseX = (ecgDrawX + ECG_PX_PER_FRAME) % w
+  ctx.fillStyle = '#060C18'
+  ctx.fillRect(eraseX, 0, ERASE_ZONE_WIDTH, h)
 
-  ctx.strokeStyle = 'rgba(34,211,238,0.07)'
-  ctx.lineWidth   = 0.5
-  for (let x = 0; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke() }
-  for (let y = 0; y < h; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke() }
+  // subtle grid dots in erase zone
+  ctx.fillStyle = 'rgba(34,211,238,0.07)'
+  for (let gx = 0; gx < ERASE_ZONE_WIDTH; gx += 50) {
+    for (let gy = 0; gy < h; gy += 20) {
+      ctx.fillRect(eraseX + gx, gy, 1, 1)
+    }
+  }
 
+  // new signal pixels at cursor
   ctx.strokeStyle = '#22D3EE'
   ctx.lineWidth   = 1.5
   ctx.beginPath()
-  for (let i = 0; i < w; i++) {
-    const bufIdx = (ecgHead - w + i + ECG_BUFFER_SIZE * 10) % ECG_BUFFER_SIZE
-    const y = mid - ecgBuffer[bufIdx] * h * 0.38
-    i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y)
-  }
-  ctx.stroke()
-}
-
-function drawScrollingPPG() {
-  const canvas = ppgCanvas.value
-  if (!canvas) return
-  const ctx   = canvas.getContext('2d')
-  const w     = canvas.width
-  const h     = canvas.height
-  const mid   = h * 0.6
-  const scale = w / PPG_BUFFER_SIZE
-
-  ctx.clearRect(0, 0, w, h)
-
-  ctx.strokeStyle = 'rgba(249,115,22,0.12)'
-  ctx.lineWidth   = 0.5
-  for (let x = 0; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke() }
-
-  ctx.strokeStyle = '#F97316'
-  ctx.lineWidth   = 1.5
-  ctx.beginPath()
-  for (let i = 0; i < PPG_BUFFER_SIZE; i++) {
-    const bufIdx = (ppgHead - PPG_BUFFER_SIZE + i + PPG_BUFFER_SIZE * 10) % PPG_BUFFER_SIZE
-    const x = i * scale
-    const y = mid - ppgBuffer[bufIdx] * h * 0.55
+  for (let i = 0; i < ECG_PX_PER_FRAME; i++) {
+    const x = (ecgDrawX + i) % w
+    const y = mid - nextEcgSample(currentRhythm) * h * 0.38
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
   }
   ctx.stroke()
+
+  ecgDrawX = (ecgDrawX + ECG_PX_PER_FRAME) % w
+}
+
+function sweepPPG() {
+  const canvas = ppgCanvas.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  const w   = canvas.width
+  const h   = canvas.height
+  const mid = h * 0.6
+
+  // erase zone ahead of cursor
+  const eraseX = (ppgDrawX + PPG_PX_PER_FRAME) % w
+  ctx.fillStyle = '#060C18'
+  ctx.fillRect(eraseX, 0, ERASE_ZONE_WIDTH, h)
+
+  // new signal pixels at cursor
+  ctx.strokeStyle = '#F97316'
+  ctx.lineWidth   = 1.5
+  ctx.beginPath()
+  for (let i = 0; i < PPG_PX_PER_FRAME; i++) {
+    const x = (ppgDrawX + i) % w
+    const y = mid - nextPpgSample() * h * 0.55
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  }
+  ctx.stroke()
+
+  ppgDrawX = (ppgDrawX + PPG_PX_PER_FRAME) % w
 }
 
 // ── animation loop ────────────────────────────────────────────────────────────
-let animFrameId    = null
-let currentRhythm  = 'Normal'
+let animFrameId   = null
+let currentRhythm = 'Normal'
 
 function animationLoop() {
-  for (let i = 0; i < 4; i++) {
-    ecgBuffer[ecgHead % ECG_BUFFER_SIZE] = nextEcgSample(currentRhythm)
-    ecgHead++
-  }
-  ppgBuffer[ppgHead % PPG_BUFFER_SIZE] = nextPpgSample()
-  ppgHead++
-
-  drawScrollingECG()
-  drawScrollingPPG()
-
+  sweepECG()
+  sweepPPG()
   animFrameId = requestAnimationFrame(animationLoop)
 }
 
@@ -218,10 +226,10 @@ function stopStream() {
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
-  ecgCanvas.value.width  = ecgCanvas.value.offsetWidth || window.innerWidth - 220
-  ecgCanvas.value.height = 80
-  ppgCanvas.value.width  = ppgCanvas.value.offsetWidth || window.innerWidth - 220
-  ppgCanvas.value.height = 55
+  initCanvas(ecgCanvas.value, 80)
+  initCanvas(ppgCanvas.value, 55)
+  ecgDrawX = 0
+  ppgDrawX = 0
   animationLoop()
   connect(selectedRhythm.value)
 })

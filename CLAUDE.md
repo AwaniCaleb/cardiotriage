@@ -3,7 +3,9 @@
 ## What This Project Is
 A clinical web application that accepts wearable ECG/PPG recordings,
 runs them through a pre-trained PyTorch triage model, and displays
-waveforms + health triage results. Built as a school project.
+waveforms + health triage results with a live streaming demo mode.
+Built as a continuous assessment project at Rivers State University,
+Department of Computer Science, Port Harcourt, Nigeria.
 
 ## Architecture — Three Services
 ```
@@ -11,35 +13,64 @@ Vue.js (Vercel) → Spring Boot REST API (Render) → PostgreSQL (Neon)
                                                  → Python FastAPI (Render)
 ```
 
+## Live URLs
+- Frontend:   https://cardiotriage.vercel.app
+- Backend:    https://cardiotriage-backend.onrender.com
+- ML Service: https://cardiotriage-ml.onrender.com
+- Database:   Neon PostgreSQL (direct connection, not pooler)
+
 ## Tech Stack
 - Backend:    Java 21, Spring Boot 3.4.1, Maven, Spring Security, JWT (jjwt 0.12.3)
 - Frontend:   Vue.js 3, Vite, Tailwind CSS, Chart.js
-- ML Service: Python, FastAPI, PyTorch (CPU-only), TorchScript
+- ML Service: Python, FastAPI, PyTorch (TorchScript, CPU-only)
 - Database:   PostgreSQL 16 (Neon free tier)
 - Hosting:    Render (backend + ml-service), Vercel (frontend), Neon (DB)
+
+## Git Workflow
+- Feature work on: development branch
+- Stable releases on: main branch
+- NEVER push directly to main — always merge from development
+- CC must always: commit to development, then merge to main
 
 ## Directory Structure
 ```
 cardiotriage/
-├── backend/          Java Spring Boot REST API
-├── frontend/         Vue.js + Vite + Tailwind
+├── backend/              Java Spring Boot REST API
+│   ├── Dockerfile        Multi-stage Maven + JRE build for Render
+│   └── src/main/
+│       ├── java/com/cardiotriage/
+│       │   ├── config/       SecurityConfig (CORS + JWT), RestTemplateConfig
+│       │   ├── controller/   AuthController, PatientController, 
+│       │   │                 RecordingController, TriageStreamController,
+│       │   │                 DashboardController, HealthController
+│       │   ├── dto/          Request/Response DTOs
+│       │   ├── model/        User, Patient, Recording, TriageResult
+│       │   ├── repository/   JPA repositories
+│       │   ├── security/     JwtUtil, JwtAuthFilter, UserDetailsServiceImpl
+│       │   └── service/      AuthService, PatientService, RecordingService
+│       └── resources/
+│           ├── application.properties
+│           └── application-local.properties  ← gitignored, local only
+├── frontend/             Vue.js 3 + Vite + Tailwind CSS
+│   ├── vercel.json       SPA rewrite rule (all routes → index.html)
+│   ├── design-reference/ mockup.html — approved UI reference
 │   └── src/
-│       ├── api/          Axios API client modules
-│       ├── layouts/      AppLayout, PublicLayout
-│       ├── pages/        One .vue file per route
-│       ├── router/       Vue Router config
-│       ├── stores/       Pinia state stores
-│       └── utils/        Shared helpers
-├── ml-service/       Python FastAPI + triage model
-│   ├── main.py           FastAPI app, /health /triage /triage/stream
-│   ├── inference.py      TorchScript model loader + run_inference()
-│   ├── preprocessor.py   ECG/PPG normalisation, feature extraction
-│   ├── generator.py      Synthetic signal generator for live demo
-│   ├── requirements.txt
-│   └── triage_model.pt   Pre-traced TorchScript model (do not retrain here)
-├── notebooks/        Original Jupyter notebook (do not modify)
+│       ├── api/index.js      Axios instance, VITE_API_URL env var
+│       ├── stores/           auth.js (Pinia), theme.js (Pinia)
+│       ├── layouts/          AppLayout.vue, PublicLayout.vue
+│       └── pages/            LandingPage, LoginPage, DashboardPage,
+│                             PatientsPage, AddPatientPage, EditPatientPage,
+│                             PatientDetailPage, TriageResultPage,
+│                             LiveDemoPage, TeamPage
+├── ml-service/           Python FastAPI + TorchScript model
+│   ├── triage_model.pt   Pre-traced TorchScript model (committed)
+│   ├── main.py           FastAPI app, endpoints
+│   ├── preprocessor.py   ECG/PPG signal preprocessing (scipy)
+│   ├── inference.py      TorchScript inference
+│   └── generator.py      Synthetic signal generation for SSE demo
+├── notebooks/            Original Jupyter notebook (do not modify)
+│   └── ecg_wearable_triage.ipynb
 └── CLAUDE.md
-```
 
 ## Key Decisions & Constraints
 - Java is MANDATED by the course — do not suggest replacing it
@@ -48,31 +79,58 @@ cardiotriage/
 - ML service uses CPU-only PyTorch to fit free hosting RAM limits
 - Frontend is Vue 3 SPA (NOT Thymeleaf) — Spring Boot is pure REST API
 - No emergency auto-dial/GPS features — scoped out for safety
-- Add "Educational project — not for clinical use" disclaimer on all pages
-- Git workflow: feature work on development branch, merge to main when stable
-
-## Environment Variables Needed
-
-### backend/
-```
-DB_URL=jdbc:postgresql://localhost:5432/cardiotriage
-DB_USERNAME=postgres
-DB_PASSWORD=yourpassword
-JWT_SECRET=cardiotriage-dev-secret-change-in-production
-ML_SERVICE_URL=http://localhost:8000
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-FILE_UPLOAD_DIR=./uploads
-```
-
-### ml-service/
-```
-MODEL_PATH=./triage_model.pt
-PORT=8000
-```
+- Always show "Educational project — not for clinical use" disclaimer
+- Neon: use DIRECT connection (no -pooler in host), database = cardiotriage
+- UptimeRobot pings both Render services every 5 min to prevent sleep
 
 ## JDK 25 Fix (Already Applied)
 Lombok requires explicit annotationProcessorPaths in pom.xml on JDK 25.
-This is already in place — do not remove it.
+Already in place — do not remove it.
+
+## Known Issues / Watch Out For
+- PowerShell: always quote -D flags: ./mvnw spring-boot:run "-Dspring-boot.run.profiles=local"
+- Vercel: VITE_API_URL must be set in Vercel dashboard env vars
+- EventSource (SSE) cannot send Authorization headers — /api/triage/stream is public (no auth)
+- Canvas animation: all animation state (ecgDrawX, ppgDrawX, generators) must be plain JS variables, NOT Vue refs — Vue re-renders will disrupt animation
+
+## Environment Variables
+
+### backend/src/main/resources/application-local.properties (gitignored)
+```
+spring.datasource.url=jdbc:postgresql://ep-noisy-waterfall-add3lzoj.c-2.us-east-1.aws.neon.tech/cardiotriage?sslmode=require&prepareThreshold=0
+spring.datasource.username=neondb_owner
+spring.datasource.password=[see local file]
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+jwt.secret=cardiotriage-local-dev-secret-32chars-min
+jwt.expiration=86400000
+ml.service.url=http://localhost:8000
+file.upload-dir=./uploads
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+```
+
+### Render (backend) Environment Variables
+```
+DB_URL                 = jdbc:postgresql://ep-noisy-waterfall-add3lzoj.c-2.us-east-1.aws.neon.tech/cardiotriage?sslmode=require&prepareThreshold=0
+DB_USERNAME            = neondb_owner
+DB_PASSWORD            = [Neon password]
+JWT_SECRET             = cardiotriage-prod-secret-min32chars-xyz
+ML_SERVICE_URL         = https://cardiotriage-ml.onrender.com
+CORS_ORIGINS           = https://cardiotriage.vercel.app
+UPLOAD_DIR             = ./uploads
+SPRING_PROFILES_ACTIVE = production
+```
+
+### Render (ml-service) Environment Variables
+```
+MODEL_PATH = ./triage_model.pt
+```
+
+### Vercel Environment Variables
+```
+VITE_API_URL = https://cardiotriage-backend.onrender.com/api
+```
 
 ## Database Schema
 ```sql
@@ -83,61 +141,67 @@ recordings     (id, patient_id, device_type, ecg_file_path,
                 ppg_file_path, uploaded_at)
 triage_results (id, recording_id, severity, severity_score,
                 rhythm_label, rhythm_probs, heart_rate,
-                hrv_rmssd, spo2, stress_level, stress_probs, created_at)
+                hrv_rmssd, spo2, stress_level, created_at)
 ```
 
 ## API Endpoints
 ```
 POST   /api/auth/register
 POST   /api/auth/login
+GET    /health                     ← public, used for UptimeRobot ping
 
 GET    /api/patients
 POST   /api/patients
 GET    /api/patients/{id}
 PUT    /api/patients/{id}
-DELETE /api/patients/{id}
+DELETE /api/patients/{id}          ← cascades to recordings + triage_results
 
 POST   /api/recordings/upload
-GET    /api/recordings/{id}/signals   Raw ECG/PPG arrays for chart rendering
+GET    /api/recordings/{id}
+GET    /api/recordings/{id}/signals  ← downsampled ECG/PPG for charts
 GET    /api/patients/{id}/recordings
 
 GET    /api/triage/{recordingId}
-GET    /api/triage/stream             SSE live demo endpoint
+GET    /api/triage/stream          ← SSE, PUBLIC (no auth), live demo
 
 GET    /api/dashboard/stats
 ```
 
-## Build Commands
+## Local Dev Commands
 ```bash
-# Backend (local profile loads application-local.properties with Neon credentials)
-SPRING_PROFILES_ACTIVE=local ./backend/mvnw spring-boot:run -f backend/pom.xml
+# Terminal 1 — Backend
+cd backend
+$env:SPRING_PROFILES_ACTIVE="local"; ./mvnw spring-boot:run
 
-# Frontend
-cd frontend && npm run dev
+# Terminal 2 — ML Service
+.venv\Scripts\activate
+cd ml-service
+uvicorn main:app --reload --port 8000
 
-# ML Service
-cd ml-service && uvicorn main:app --reload --port 8000
+# Terminal 3 — Frontend
+cd frontend
+npm run dev
+# App runs at http://localhost:5173
 ```
 
-## What Is Built So Far
-- [x] Project folder structure
-- [x] TorchScript model exported (triage_model.pt in ml-service/)
-- [x] Spring Boot scaffold (pom.xml, main class, application.properties)
-- [x] JWT auth system (User, JwtUtil, JwtAuthFilter, SecurityConfig,
-      AuthService, AuthController) — auth errors return 400/401/409, not 500
-- [x] Patient CRUD (Patient, PatientRepository, PatientRequest/Response/Summary,
-      PatientService, PatientController) — cascade-deletes recordings + triage on delete
-- [x] Recording upload (Recording, RecordingController, RecordingService)
-- [x] Python ML service (main.py, inference.py, preprocessor.py, generator.py)
-- [x] Triage results (TriageResult, TriageResultRepository, GET /api/triage/{recordingId})
-- [x] Vue frontend (13 pages: Landing, Login, Dashboard, Patients, Add/Edit/Detail,
-      TriageResult, LiveDemo, Team — plus AppLayout/PublicLayout, router, stores, api)
-- [x] Dashboard (DashboardController → /api/dashboard/stats, DashboardPage.vue)
-- [x] Landing page (LandingPage.vue)
-- [x] Live SSE demo (TriageStreamController, LiveDemoPage.vue)
+## What Is Complete
+- [x] Spring Boot backend — all endpoints
+- [x] Python ML service — preprocessing, inference, SSE stream
+- [x] Vue frontend — all 10 pages
+- [x] TorchScript model (triage_model.pt)
+- [x] JWT auth (24-hour expiry)
+- [x] CORS configured for production
+- [x] Live Demo — strip chart ECG/PPG animation
+- [x] TriageResultPage — real signals from /api/recordings/{id}/signals
+- [x] Deployed: Vercel + Render + Neon
+- [x] UptimeRobot keep-alive pings
+- [x] Landing page (9 sections)
+- [x] Team page (15 member slots — update data when available)
+- [x] SPA routing (vercel.json rewrite)
 
-## What To Build Next
-- [ ] Wire recording upload form in frontend to POST /api/recordings/upload
-- [ ] Display triage results page after upload (TriageResultPage.vue ↔ GET /api/triage/{id})
-- [ ] Render ECG/PPG waveforms in frontend using GET /api/recordings/{id}/signals + Chart.js
-- [ ] Deployment: Render services (backend + ml-service), Vercel (frontend), env vars
+## What Still Needs Doing
+- [ ] Sidebar shows "Dr. Sarah Chen" placeholder — should show logged-in user email
+- [ ] Dashboard stats showing 0 — investigate API call
+- [ ] Team page — fill in real names, mat numbers, roles from group
+- [ ] UI refinements (discussed, deferred)
+- [ ] Technical report / documentation for submission

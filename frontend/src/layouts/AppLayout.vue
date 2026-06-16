@@ -23,9 +23,19 @@ const isPatientsActive = computed(() =>
   route.path.startsWith('/patients') || route.path.startsWith('/recordings')
 )
 
+const displayName = computed(() => {
+  const local = (authStore.userEmail || '').split('@')[0]
+  const name = local.split(/[._]/).filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+  return name.length > 18 ? name.slice(0, 18) + '…' : name
+})
+
 const avatarInitials = computed(() => {
   const local = (authStore.userEmail || '').split('@')[0]
-  return local.slice(0, 2).toUpperCase() || '??'
+  const words = local.split(/[._]/).filter(Boolean)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return (words[0] || '??').slice(0, 2).toUpperCase()
 })
 </script>
 
@@ -70,7 +80,7 @@ const avatarInitials = computed(() => {
         <div class="sb-user">
           <div class="sb-avatar">{{ avatarInitials }}</div>
           <div>
-            <div class="sb-user-name">{{ authStore.userEmail }}</div>
+            <div class="sb-user-name">{{ displayName }}</div>
             <div class="sb-user-role">{{ authStore.userRole ?? 'CLINICIAN' }}</div>
           </div>
         </div>

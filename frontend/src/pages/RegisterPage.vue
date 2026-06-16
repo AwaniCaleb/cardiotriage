@@ -70,31 +70,33 @@ async function handleSubmit() {
       </div>
 
       <!-- Right form panel -->
-      <div style="background:#F8FAFC;padding:40px;display:flex;flex-direction:column;justify-content:center;">
-        <h2 style="font-size:20px;font-weight:500;color:#0F172A;margin-bottom:4px;">Create account</h2>
-        <p style="font-size:13px;color:#64748B;margin-bottom:26px;">Register to access CardioTriage</p>
-        <form @submit.prevent="handleSubmit">
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label" style="color:#374151;">Email address</label>
-            <input v-model="email" class="form-input" type="email" placeholder="doctor@hospital.org" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
-          </div>
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label" style="color:#374151;">Password</label>
-            <input v-model="password" class="form-input" type="password" placeholder="••••••••" required minlength="8" style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
-          </div>
-          <div class="form-group" style="margin-bottom:20px;">
-            <label class="form-label" style="color:#374151;">Confirm password</label>
-            <input v-model="confirmPassword" class="form-input" type="password" placeholder="••••••••" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
-          </div>
-          <p v-if="error" style="color:#DC2626;font-size:12px;margin-bottom:14px;">{{ error }}</p>
-          <button class="btn-primary" type="submit" :disabled="loading" style="width:100%;padding:10px;font-size:13px;font-weight:500;justify-content:center;background:#0891B2;border-color:#0891B2;">
-            {{ loading ? 'Creating account…' : 'Create account' }}
-          </button>
-        </form>
-        <p style="text-align:center;font-size:13px;color:#64748B;margin-top:18px;">
-          Already have an account?
-          <span style="color:#0891B2;cursor:pointer;" @click="router.push('/login')">Sign in</span>
-        </p>
+      <div style="background:#F8FAFC;padding:40px;display:flex;flex-direction:column;overflow-y:auto;">
+        <div style="margin:auto 0;">
+          <h2 style="font-size:20px;font-weight:500;color:#0F172A;margin-bottom:4px;">Create account</h2>
+          <p style="font-size:13px;color:#64748B;margin-bottom:26px;">Register to access CardioTriage</p>
+          <form @submit.prevent="handleSubmit">
+            <div class="form-group" style="margin-bottom:14px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+              <label class="form-label" style="color:#374151;">Email address</label>
+              <input v-model="email" class="form-input" type="email" placeholder="doctor@hospital.org" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+              <label class="form-label" style="color:#374151;">Password</label>
+              <input v-model="password" class="form-input" type="password" placeholder="••••••••" required minlength="8" style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
+            </div>
+            <div class="form-group" style="margin-bottom:20px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+              <label class="form-label" style="color:#374151;">Confirm password</label>
+              <input v-model="confirmPassword" class="form-input" type="password" placeholder="••••••••" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
+            </div>
+            <p v-if="error" style="color:#DC2626;font-size:12px;margin-bottom:14px;">{{ error }}</p>
+            <button class="btn-primary" type="submit" :disabled="loading" style="width:100%;padding:10px;font-size:13px;font-weight:500;justify-content:center;background:#0891B2;border-color:#0891B2;">
+              {{ loading ? 'Creating account…' : 'Create account' }}
+            </button>
+          </form>
+          <p style="text-align:center;font-size:13px;color:#64748B;margin-top:18px;">
+            Already have an account?
+            <span style="color:#0891B2;cursor:pointer;" @click="router.push('/login')">Sign in</span>
+          </p>
+        </div>
       </div>
     </div>
   </PublicLayout>

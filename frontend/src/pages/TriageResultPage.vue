@@ -1,10 +1,11 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../layouts/AppLayout.vue'
 import api from '../api'
 import { formatRecordingDate, rhythmDescription, severityBadgeClass } from '../utils/format'
 import { drawECG, drawPPG } from '../utils/ecgCanvas'
+import Chart from 'chart.js/auto'
 
 const route = useRoute()
 const router = useRouter()
@@ -64,18 +65,63 @@ function goBack() {
   else router.back()
 }
 
+let ecgChart = null
+let ppgChart = null
+
+function renderSignalChart(canvas, samples, lineColor, gridColor) {
+  if (!canvas || !samples.length) return null
+  return new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: samples.map((_, i) => i),
+      datasets: [{ data: samples, borderColor: lineColor, borderWidth: 1.5, pointRadius: 0, tension: 0.2 }],
+    },
+    options: {
+      animation: false,
+      responsive: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false, grid: { color: gridColor, lineWidth: 0.5 } },
+        y: { display: false, grid: { color: gridColor, lineWidth: 0.5 } },
+      },
+      layout: { padding: 0 },
+    },
+  })
+}
+
 onMounted(async () => {
-  try {
-    const { data } = await api.get(`/triage/${recordingId}`)
-    triage.value = data
-    await nextTick()
-    drawECG(ecgCanvas.value, data.rhythmLabel === 'AFib')
-    drawPPG(ppgCanvas.value)
-  } catch {
-    triage.value = null
-  } finally {
-    loading.value = false
+  const [triageRes, signalsRes] = await Promise.allSettled([
+    api.get(`/triage/${recordingId}`),
+    api.get(`/recordings/${recordingId}/signals`),
+  ])
+
+  if (triageRes.status === 'fulfilled') {
+    triage.value = triageRes.value.data
   }
+  loading.value = false
+
+  if (!triage.value) return
+  await nextTick()
+
+  const ecg = signalsRes.status === 'fulfilled' ? (signalsRes.value.data?.ecg ?? []) : []
+  const ppg = signalsRes.status === 'fulfilled' ? (signalsRes.value.data?.ppg ?? []) : []
+
+  if (ecg.length > 0) {
+    ecgChart = renderSignalChart(ecgCanvas.value, ecg, '#22D3EE', 'rgba(34,211,238,0.07)')
+  } else {
+    drawECG(ecgCanvas.value, triage.value.rhythmLabel === 'AFib')
+  }
+
+  if (ppg.length > 0) {
+    ppgChart = renderSignalChart(ppgCanvas.value, ppg, '#F97316', 'rgba(249,115,22,0.12)')
+  } else {
+    drawPPG(ppgCanvas.value)
+  }
+})
+
+onUnmounted(() => {
+  ecgChart?.destroy()
+  ppgChart?.destroy()
 })
 </script>
 

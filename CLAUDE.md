@@ -92,6 +92,8 @@ Already in place — do not remove it.
 - Vercel: VITE_API_URL must be set in Vercel dashboard env vars
 - EventSource (SSE) cannot send Authorization headers — /api/triage/stream is public (no auth)
 - Canvas animation: all animation state (ecgDrawX, ppgDrawX, generators) must be plain JS variables, NOT Vue refs — Vue re-renders will disrupt animation
+- SSE rhythm_label: the model classifies synthetic signals conservatively — rhythm_label returned may differ from the requested rhythm parameter (e.g. AFib signal classified as Normal). This is a model behaviour issue, not a code bug. Severity is GREEN for most synthetic signals but RED for genuine uploaded recordings.
+- Render cold start: Render free tier sleeps after 15 min; first request takes 30–90 s. seed_demo_data.py pings /health first to wake services before uploading.
 
 ## Environment Variables
 
@@ -184,6 +186,15 @@ npm run dev
 # App runs at http://localhost:5173
 ```
 
+## Demo Data (production DB as of 2026-06-16)
+- 9 patients, 8 recordings, 1 critical alert (RED)
+- Ngozi Adeyemi (id=8) — AFib, severity=RED, HR=110, SpO₂=91%
+- Tunde Bakare (id=9) — Bradycardia, severity=GREEN, HR=45
+- Chioma Obi (id=10) — Tachycardia, severity=GREEN, HR=137
+- Seun Adesanya (id=11) — Normal, severity=GREEN, HR=75
+- Chidi Nwosu (id=5) — extra AFib recording
+- Seed script: seed_demo_data.py (run from project root)
+
 ## What Is Complete
 - [x] Spring Boot backend — all endpoints
 - [x] Python ML service — preprocessing, inference, SSE stream
@@ -198,10 +209,12 @@ npm run dev
 - [x] Landing page (9 sections)
 - [x] Team page (15 member slots — update data when available)
 - [x] SPA routing (vercel.json rewrite)
+- [x] Sidebar shows formatted display name from logged-in user email
+- [x] Dashboard stats wired to GET /api/dashboard/stats with fallback
+- [x] Demo data seeded (9 patients, 8 recordings, 1 RED critical)
+- [x] Full app audit passed 18/18 checks (2026-06-16)
 
 ## What Still Needs Doing
-- [ ] Sidebar shows "Dr. Sarah Chen" placeholder — should show logged-in user email
-- [ ] Dashboard stats showing 0 — investigate API call
 - [ ] Team page — fill in real names, mat numbers, roles from group
 - [ ] UI refinements (discussed, deferred)
 - [ ] Technical report / documentation for submission

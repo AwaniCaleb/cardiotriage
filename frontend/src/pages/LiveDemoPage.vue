@@ -63,12 +63,12 @@ function connect(rhythm) {
   eventSource.addEventListener('triage', (e) => {
     try {
       const data = JSON.parse(e.data)
-      heartRate.value = data.heartRate
+      heartRate.value = data.heart_rate
       spo2.value = data.spo2
-      hrvRmssd.value = data.hrvRmssd
+      hrvRmssd.value = data.hrv_rmssd
       severity.value = data.severity
-      rhythmLabel.value = data.rhythmLabel
-      rhythmProbs.value = parseRhythmProbs(data.rhythmProbs)
+      rhythmLabel.value = data.rhythm_label
+      rhythmProbs.value = parseRhythmProbs(data.rhythm_probs)
       redraw()
     } catch {
       // ignore malformed event

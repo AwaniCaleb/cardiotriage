@@ -3,23 +3,34 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import PublicLayout from '../layouts/PublicLayout.vue'
 import { useAuthStore } from '../stores/auth'
+import api from '../api'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const loading = ref(false)
 const error = ref('')
 
 async function handleSubmit() {
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match'
+    return
+  }
   loading.value = true
   error.value = ''
   try {
+    await api.post('/auth/register', {
+      email: email.value,
+      password: password.value,
+      confirmPassword: confirmPassword.value,
+    })
     await authStore.login(email.value, password.value)
     router.push('/dashboard')
   } catch {
-    error.value = 'Invalid email or password'
+    error.value = 'Registration failed. Email may already be in use.'
   } finally {
     loading.value = false
   }
@@ -60,25 +71,29 @@ async function handleSubmit() {
 
       <!-- Right form panel -->
       <div style="background:#F8FAFC;padding:40px;display:flex;flex-direction:column;justify-content:center;">
-        <h2 style="font-size:20px;font-weight:500;color:#0F172A;margin-bottom:4px;">Sign in</h2>
-        <p style="font-size:13px;color:#64748B;margin-bottom:26px;">Enter your credentials to continue</p>
+        <h2 style="font-size:20px;font-weight:500;color:#0F172A;margin-bottom:4px;">Create account</h2>
+        <p style="font-size:13px;color:#64748B;margin-bottom:26px;">Register to access CardioTriage</p>
         <form @submit.prevent="handleSubmit">
-          <div class="form-group" style="margin-bottom:14px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+          <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label" style="color:#374151;">Email address</label>
             <input v-model="email" class="form-input" type="email" placeholder="doctor@hospital.org" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
           </div>
-          <div class="form-group" style="margin-bottom:20px;--bd:#CBD5E1;--su:#fff;--tx:#0F172A;">
+          <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label" style="color:#374151;">Password</label>
-            <input v-model="password" class="form-input" type="password" placeholder="••••••••" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
+            <input v-model="password" class="form-input" type="password" placeholder="••••••••" required minlength="8" style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label" style="color:#374151;">Confirm password</label>
+            <input v-model="confirmPassword" class="form-input" type="password" placeholder="••••••••" required style="border-color:#CBD5E1;background:#fff;color:#0F172A;" />
           </div>
           <p v-if="error" style="color:#DC2626;font-size:12px;margin-bottom:14px;">{{ error }}</p>
-          <button class="btn-primary" type="submit" :disabled="loading" style="width:100%;padding:10px;font-size:13px;font-weight:500;justify-content:center;">
-            {{ loading ? 'Signing in…' : 'Sign in' }}
+          <button class="btn-primary" type="submit" :disabled="loading" style="width:100%;padding:10px;font-size:13px;font-weight:500;justify-content:center;background:#0891B2;border-color:#0891B2;">
+            {{ loading ? 'Creating account…' : 'Create account' }}
           </button>
         </form>
         <p style="text-align:center;font-size:13px;color:#64748B;margin-top:18px;">
-          Don't have an account?
-          <span style="color:#0891B2;cursor:pointer;" @click="router.push('/register')">Register →</span>
+          Already have an account?
+          <span style="color:#0891B2;cursor:pointer;" @click="router.push('/login')">Sign in</span>
         </p>
       </div>
     </div>

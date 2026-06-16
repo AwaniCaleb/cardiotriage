@@ -44,6 +44,7 @@ const techStack = [
             <a href="#how-it-works" style="color:#94A3B8;font-size:13px;text-decoration:none;">How it works</a>
             <a href="#features" style="color:#94A3B8;font-size:13px;text-decoration:none;">Features</a>
             <a href="#" style="color:#94A3B8;font-size:13px;text-decoration:none;" @click.prevent="router.push('/team')">Team</a>
+            <button style="background:transparent;color:#0891B2;border:1px solid #0891B2;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;" @click="router.push('/register')">Register</button>
             <button style="background:#0891B2;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;" @click="router.push('/login')">Sign in</button>
           </div>
         </div>

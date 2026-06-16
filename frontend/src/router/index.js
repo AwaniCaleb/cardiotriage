@@ -14,6 +14,7 @@ const routes = [
   { path: '/', name: 'landing', component: LandingPage },
   { path: '/team', name: 'team', component: () => import('../pages/TeamPage.vue') },
   { path: '/login', name: 'login', component: LoginPage },
+  { path: '/register', name: 'register', component: () => import('../pages/RegisterPage.vue') },
   { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true } },
   { path: '/patients', name: 'patients', component: PatientsPage, meta: { requiresAuth: true } },
   { path: '/patients/new', name: 'patient-new', component: AddPatientPage, meta: { requiresAuth: true } },

@@ -30,7 +30,7 @@ const techStack = [
 
 <template>
   <PublicLayout>
-    <div class="h-full overflow-y-auto">
+    <div style="height:100%;overflow-y:auto">
       <div class="landing">
         <!-- SECTION 1 — Nav -->
         <div class="landing-nav">

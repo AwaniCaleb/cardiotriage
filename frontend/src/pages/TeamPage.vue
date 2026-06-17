@@ -41,33 +41,36 @@ function avatarLabel(member) {
 
 <template>
   <PublicLayout>
-    <div class="h-full overflow-y-auto">
+    <div style="height:100%;overflow-y:auto;background:#060C18">
       <!-- Header -->
       <div class="team-header">
         <button class="team-back-btn" @click="router.push('/')">← Back to home</button>
         <div class="landing-badge">Rivers State University · Dept. of Computer Science</div>
-        <h1 style="color:#F1F5F9;font-size:28px;font-weight:500;margin-bottom:10px;">Meet the Team</h1>
+        <h1 style="color:#F1F5F9;font-size:28px;font-weight:500;margin:16px 0 10px;">Meet the Team</h1>
         <p style="color:#64748B;max-width:480px;margin:0 auto;line-height:1.7;">
           CardioTriage was developed by a team of Computer Science students as a continuous
           assessment project, 2025/2026 academic session.
         </p>
-
         <div class="team-project-card">
-          <div style="color:#22D3EE;font-size:13px;margin-bottom:4px;">Project: CardioTriage — Wearable ECG Triage System</div>
+          <div style="color:#38BDF8;font-size:13px;margin-bottom:4px;">Project: CardioTriage — Wearable ECG Triage System</div>
           <div style="color:#64748B;font-size:11px;">Submitted to the Department of Computer Science, RSU</div>
         </div>
       </div>
 
       <!-- Team grid -->
-      <div class="team-grid">
-        <div v-for="(member, index) in team" :key="member.matNo + index" class="team-card">
-          <div class="team-avatar" :style="{ background: avatarBg(index), color: avatarFg(index) }">
-            {{ avatarLabel(member) }}
+      <div style="padding:0 60px 40px">
+        <div class="team-grid">
+          <div v-for="(member, index) in team" :key="member.matNo + index" class="team-card">
+            <div class="team-av-wrap">
+              <div class="team-avatar" :style="{ background: avatarBg(index), color: avatarFg(index) }">
+                {{ avatarLabel(member) }}
+              </div>
+            </div>
+            <div class="team-name">{{ member.name }}</div>
+            <div v-if="member.matNo.includes('REPLACE')" class="team-mat-tbd">Mat. No. TBD</div>
+            <div v-else class="team-mat">{{ member.matNo }}</div>
+            <div class="team-role">{{ member.role }}</div>
           </div>
-          <div class="team-name">{{ member.name }}</div>
-          <span v-if="member.matNo.includes('REPLACE')" class="team-mat-tbd">Mat. No. TBD</span>
-          <span v-else class="team-mat">{{ member.matNo }}</span>
-          <div class="team-role">{{ member.role }}</div>
         </div>
       </div>
 

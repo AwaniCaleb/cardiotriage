@@ -56,62 +56,53 @@ async function deletePatient(id) {
 
 <template>
   <AppLayout>
-    <div class="page-header">
+    <div class="topbar">
       <div>
-        <div class="page-title">Patients</div>
-        <div class="page-sub">{{ patients.length }} records total</div>
+        <div class="pg-title">Patients</div>
+        <div class="pg-sub">{{ patients.length }} records total</div>
       </div>
-      <button class="btn-primary" @click="router.push('/patients/new')">+ Add patient</button>
+      <button class="btn primary" @click="router.push('/patients/new')"><i class="ti ti-plus"></i>Add patient</button>
     </div>
 
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" v-model="search" placeholder="Search patients by name..." />
-    </div>
+    <div class="body">
+      <div class="search-bar">
+        <i class="ti ti-search"></i>
+        <input type="text" v-model="search" placeholder="Search patients by name…">
+      </div>
 
-    <div v-if="loading" style="display:flex;justify-content:center;padding:40px 0;">
-      <div class="animate-spin" style="width:24px;height:24px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;"></div>
-    </div>
+      <div v-if="loading" style="display:flex;justify-content:center;padding:40px 0;">
+        <div style="width:24px;height:24px;border:2px solid var(--border-color);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;"></div>
+      </div>
 
-    <div v-else-if="patients.length === 0" class="card" style="padding:32px;text-align:center;color:var(--tm);font-size:13px;">
-      No patients yet. Add your first patient.
-    </div>
+      <div v-else-if="patients.length === 0" class="card" style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">
+        No patients yet. Add your first patient.
+      </div>
 
-    <div v-else-if="filteredPatients.length === 0" class="card" style="padding:32px;text-align:center;color:var(--tm);font-size:13px;">
-      No patients match your search.
-    </div>
+      <div v-else-if="filteredPatients.length === 0" class="card" style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">
+        No patients match your search.
+      </div>
 
-    <div v-else class="card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th style="width:28%;">Name</th>
-            <th style="width:11%;">Age</th>
-            <th style="width:16%;">Gender</th>
-            <th style="width:22%;">Last recording</th>
-            <th style="width:23%;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in filteredPatients" :key="p.id" @click="router.push(`/patients/${p.id}`)">
-            <td style="font-weight:500;">{{ p.name }}</td>
-            <td>{{ p.age }}</td>
-            <td>{{ p.gender || '—' }}</td>
-            <td style="color:var(--tm);font-size:12px;">{{ p.lastRecording ? formatRelativeTime(p.lastRecording.uploadedAt) : '—' }}</td>
-            <td>
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                <span class="badge" :class="severityBadgeClass(p.lastRecording?.triageResult?.severity)">
-                  {{ p.lastRecording?.triageResult?.severity ?? 'No result' }}
-                </span>
-                <div style="display:flex;gap:4px;">
-                  <button class="btn-secondary" style="padding:4px 7px;" title="Edit patient" @click.stop="goToEdit(p.id)">✏</button>
-                  <button class="btn-danger" style="padding:4px 7px;" title="Delete patient" @click.stop="deletePatient(p.id)">🗑</button>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <template v-else>
+        <div
+          v-for="p in filteredPatients"
+          :key="p.id"
+          class="row-card"
+          @click="router.push(`/patients/${p.id}`)"
+        >
+          <div class="av" :class="p.lastRecording?.triageResult?.severity === 'RED' ? 'red' : p.lastRecording?.triageResult?.severity === 'GREEN' ? 'green' : p.lastRecording?.triageResult?.severity === 'YELLOW' ? 'purple' : 'teal'">
+            {{ (p.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() }}
+          </div>
+          <div class="flex-1">
+            <div class="row-name">{{ p.name }}</div>
+            <div class="row-sub">{{ p.age }} · {{ p.gender || '—' }} · {{ p.conditions || 'No conditions' }}</div>
+          </div>
+          <span class="badge" :class="severityBadgeClass(p.lastRecording?.triageResult?.severity)">{{ p.lastRecording?.triageResult?.severity ?? '—' }}</span>
+          <div style="display:flex;gap:6px;margin-left:6px;" @click.stop>
+            <button class="btn ghost" style="padding:6px 10px;font-size:12px;" @click.stop="goToEdit(p.id)"><i class="ti ti-edit"></i></button>
+            <button class="btn danger" style="padding:6px 10px;font-size:12px;" @click.stop="deletePatient(p.id)"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>
+      </template>
     </div>
   </AppLayout>
 </template>

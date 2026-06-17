@@ -253,77 +253,61 @@ onUnmounted(() => {
 
 <template>
   <AppLayout>
-    <div class="page-header">
+    <!-- Stream header -->
+    <div class="stream-hdr">
       <div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <div class="page-title">Live Demo</div>
-          <div v-if="streaming" class="live-badge"><div class="live-dot"></div>STREAMING</div>
-          <span v-else style="font-size:11px;color:var(--tm);">Stream ended</span>
+        <div class="flex items-c gap-10">
+          <div class="pg-title">Live Demo</div>
+          <div v-if="streaming" class="stream-badge"><div class="stream-dot"></div>STREAMING</div>
+          <span v-else style="font-size:11px;color:var(--text-3)">Stream ended</span>
         </div>
-        <div class="page-sub">Synthetic ECG/PPG · Updates every 5 seconds</div>
+        <div class="pg-sub" style="margin-top:3px">Synthetic ECG/PPG · Updates every 5 seconds</div>
       </div>
-      <button class="btn-secondary" :disabled="!streaming" @click="stopStream">⏹ Stop</button>
+      <button class="btn ghost" :disabled="!streaming" @click="stopStream"><i class="ti ti-player-stop"></i>Stop</button>
     </div>
 
-    <div style="margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--tm);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Select rhythm:</div>
-      <div class="rhythm-selector">
-        <button
-          v-for="r in RHYTHMS"
-          :key="r"
-          class="rhythm-btn"
-          :class="{ active: selectedRhythm === r }"
-          @click="selectRhythm(r)"
-        >{{ r }}</button>
-      </div>
+    <!-- Rhythm selector tabs -->
+    <div class="rhythm-tabs">
+      <button
+        v-for="r in RHYTHMS"
+        :key="r"
+        class="rhythm-tab"
+        :class="{ active: selectedRhythm === r }"
+        @click="selectRhythm(r)"
+      >{{ r }}</button>
     </div>
 
-    <div class="vitals-grid">
-      <div class="vital-card">
-        <div class="vital-label">Heart Rate</div>
-        <div class="vital-val">{{ Math.round(heartRate) }}</div>
-        <div class="vital-unit">bpm</div>
-      </div>
-      <div class="vital-card">
-        <div class="vital-label">SpO₂</div>
-        <div class="vital-val">{{ spo2?.toFixed(1) }}</div>
-        <div class="vital-unit">%</div>
-      </div>
-      <div class="vital-card">
-        <div class="vital-label">HRV RMSSD</div>
-        <div class="vital-val">{{ hrvRmssd?.toFixed(1) }}</div>
-        <div class="vital-unit">ms</div>
-      </div>
-      <div class="vital-card">
-        <div class="vital-label">Severity</div>
-        <div class="vital-val" :style="{ color: severityColor }">{{ severity }}</div>
-        <div class="vital-unit">status</div>
-      </div>
+    <!-- Vitals strip -->
+    <div class="vitals-strip">
+      <div class="vstrip-card"><div class="vital-lbl">Heart Rate</div><div class="vital-val">{{ Math.round(heartRate) }} <span style="font-size:12px;font-weight:400">bpm</span></div></div>
+      <div class="vstrip-card"><div class="vital-lbl">SpO₂</div><div class="vital-val">{{ spo2?.toFixed(1) }} <span style="font-size:12px;font-weight:400">%</span></div></div>
+      <div class="vstrip-card"><div class="vital-lbl">HRV RMSSD</div><div class="vital-val">{{ hrvRmssd?.toFixed(1) }} <span style="font-size:12px;font-weight:400">ms</span></div></div>
+      <div class="vstrip-card"><div class="vital-lbl">Severity</div><div class="vital-val" style="font-size:20px" :style="{ color: severityColor }">{{ severity }}</div></div>
     </div>
 
-    <div class="monitor">
-      <div class="monitor-hdr">
-        <span class="monitor-label">ECG · Live · 256 Hz</span>
-        <span class="monitor-tag">{{ rhythmDescription(rhythmLabel) }}</span>
-      </div>
-      <canvas ref="ecgCanvas" style="width:100%;height:80px;display:block;"></canvas>
-    </div>
-
-    <div class="monitor" style="margin-bottom:14px;">
-      <div class="monitor-hdr">
-        <span class="monitor-label">PPG · Live · 64 Hz</span>
-      </div>
-      <canvas ref="ppgCanvas" style="width:100%;height:55px;display:block;"></canvas>
-    </div>
-
-    <div class="rhythm-bars">
-      <div class="rhythm-title">Live classification</div>
-      <div v-for="row in LIVE_RHYTHM_ROWS" :key="row.name" class="rhythm-row" style="margin-bottom:7px;">
-        <span class="rhythm-name">{{ row.name }}</span>
-        <div class="rhythm-track">
-          <div class="rhythm-fill" :style="{ width: `${(rhythmProbs[row.name] ?? 0) * 100}%`, background: row.color }"></div>
+    <!-- Canvas blocks -->
+    <div style="padding:0 24px 14px">
+      <div class="canvas-block" style="margin-bottom:10px">
+        <div class="canvas-lbl"><span>ECG · LIVE · 256 HZ</span><span class="rhythm-tag">{{ rhythmDescription(rhythmLabel) }}</span></div>
+        <div class="canvas-bg">
+          <canvas ref="ecgCanvas" style="width:100%;height:90px;display:block;"></canvas>
         </div>
-        <span class="rhythm-pct">{{ Math.round((rhythmProbs[row.name] ?? 0) * 100) }}%</span>
+      </div>
+      <div class="canvas-block" style="margin-bottom:14px">
+        <div class="canvas-lbl"><span>PPG · LIVE · 64 HZ</span></div>
+        <div class="canvas-bg">
+          <canvas ref="ppgCanvas" style="width:100%;height:65px;display:block;"></canvas>
+        </div>
+      </div>
+
+      <!-- Classification -->
+      <div class="rhythm-probs">
+        <div class="sec-title" style="margin-bottom:12px">Live Classification</div>
+        <div v-for="row in LIVE_RHYTHM_ROWS" :key="row.name" class="rhythm-row">
+          <div class="rhythm-name">{{ row.name }}</div>
+          <div class="rhythm-track"><div class="rhythm-fill" :style="{ width: `${(rhythmProbs[row.name] ?? 0) * 100}%`, background: row.color }"></div></div>
+          <div class="rhythm-pct">{{ Math.round((rhythmProbs[row.name] ?? 0) * 100) }}%</div>
+        </div>
       </div>
     </div>
   </AppLayout>

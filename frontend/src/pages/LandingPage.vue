@@ -66,7 +66,7 @@ const techStack = [
             classification, vital signs, and severity grading within seconds. Designed for
             clinical review and patient monitoring.
           </p>
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <div class="land-ctas" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button
               style="background:#0891B2;color:#fff;padding:10px 24px;font-size:14px;border:none;border-radius:7px;cursor:pointer;"
               @click="router.push('/login')"

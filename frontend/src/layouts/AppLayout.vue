@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
 import { useAuthStore } from '../stores/auth'
@@ -7,6 +7,8 @@ import { useAuthStore } from '../stores/auth'
 const route = useRoute()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+
+const sidebarOpen = ref(false)
 
 function applyDark(isDark) {
   if (isDark) {
@@ -40,7 +42,10 @@ const avatarInitials = computed(() => {
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="app-shell" :class="{ 'sb-open': sidebarOpen }">
+    <!-- Mobile backdrop -->
+    <div class="sidebar-backdrop" @click="sidebarOpen = false"></div>
+
     <!-- Sidebar -->
     <div class="sb">
       <div class="sb-logo">
@@ -58,7 +63,7 @@ const avatarInitials = computed(() => {
         </svg>
       </div>
 
-      <div class="sb-nav">
+      <div class="sb-nav" @click="sidebarOpen = false">
         <div class="nav-lbl">Menu</div>
         <RouterLink class="nav-a" to="/dashboard" :class="{ active: route.path === '/dashboard' }">
           <i class="ti ti-layout-dashboard"></i>Dashboard
@@ -94,6 +99,9 @@ const avatarInitials = computed(() => {
 
     <!-- Main content -->
     <div class="main">
+      <button class="hamburger-btn" @click="sidebarOpen = !sidebarOpen" aria-label="Open menu">
+        <i class="ti ti-menu-2"></i>
+      </button>
       <slot />
     </div>
   </div>

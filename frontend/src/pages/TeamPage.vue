@@ -58,7 +58,7 @@ function avatarLabel(member) {
       </div>
 
       <!-- Team grid -->
-      <div style="padding:0 60px 40px">
+      <div class="team-grid-wrap" style="padding:0 60px 40px">
         <div class="team-grid">
           <div v-for="(member, index) in team" :key="member.matNo + index" class="team-card">
             <div class="team-av-wrap">

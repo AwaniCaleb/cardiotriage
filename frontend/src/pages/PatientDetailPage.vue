@@ -124,7 +124,7 @@ function goToTriage(rec) {
         </div>
 
         <!-- Two-column: recordings + upload -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="detail-cols" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div>
             <div class="sec-hdr"><div class="sec-title">Recordings ({{ recordings.length }})</div></div>
             <div v-if="recordings.length === 0" class="card" style="padding:24px;text-align:center;color:var(--text-3);font-size:13px;">No recordings yet.</div>

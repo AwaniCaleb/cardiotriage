@@ -556,18 +556,18 @@ body {
 }
 
 /* ── TEAM PAGE ── */
-.team-header { padding: 48px 60px 32px; text-align: center; background: #060C18; }
+.team-header { padding: 48px 60px 32px; text-align: center; background: var(--bg-page); }
 .team-back-btn {
-  background: none; border: 1px solid #1A2338; color: #64748B;
+  background: none; border: 1px solid var(--border-color); color: var(--text-2);
   padding: 6px 14px; border-radius: 7px; font-size: 12px; cursor: pointer;
   margin-bottom: 20px; font-family: inherit;
 }
 .team-project-card {
   display: inline-block; margin-top: 20px;
-  background: #0E1628; border: 1px solid #1A2840;
+  background: var(--bg-card); border: 1px solid var(--border-color);
   border-radius: 10px; padding: 12px 20px; text-align: left;
 }
-.team-footer { padding: 20px 60px; text-align: center; background: #060C18; border-top: 1px solid #0C2340; }
+.team-footer { padding: 20px 60px; text-align: center; background: var(--bg-page); border-top: 1px solid var(--border-color); }
 .team-avatar {
   width: 64px; height: 64px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;

@@ -17,7 +17,7 @@ watch(() => themeStore.isDark, applyDark)
 </script>
 
 <template>
-  <div class="h-screen overflow-hidden" :data-dark="themeStore.isDark ? '' : null" style="background: var(--bg)">
+  <div style="height:100%;background:var(--bg-page)">
     <slot />
   </div>
 </template>

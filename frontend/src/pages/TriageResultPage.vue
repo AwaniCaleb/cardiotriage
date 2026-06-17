@@ -127,69 +127,63 @@ onUnmounted(() => {
 
 <template>
   <AppLayout>
-    <div v-if="loading" style="color: var(--tm); font-size: 13px;">Loading...</div>
+    <div v-if="loading" class="body" style="padding-top:20px;color:var(--text-3);font-size:13px;">Loading…</div>
 
-    <div v-else-if="!triage" class="card" style="padding:32px;text-align:center;color:var(--tm);font-size:13px;">
-      Triage result not found.
+    <div v-else-if="!triage" class="body">
+      <div class="card" style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">Triage result not found.</div>
     </div>
 
     <template v-else>
-      <div class="page-header" style="margin-bottom:12px;">
+      <div class="topbar">
         <div>
-          <button class="btn-secondary" style="margin-bottom:8px;font-size:11px;" @click="goBack">← Back to patient</button>
-          <div class="page-title">Triage Result</div>
-          <div class="page-sub">{{ headerSub }}</div>
-        </div>
-        <span class="badge" :class="severityBadgeClass(triage.severity)" style="font-size:12px;padding:6px 14px;">{{ severityBadgeText }}</span>
-      </div>
-
-      <div class="vitals-grid">
-        <div class="vital-card">
-          <div class="vital-label">Heart Rate</div>
-          <div class="vital-val">{{ Math.round(triage.heartRate) }}</div>
-          <div class="vital-unit">bpm</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-label">SpO₂</div>
-          <div class="vital-val" :style="{ color: triage.spo2 < 95 ? '#FCD34D' : 'var(--tx)' }">{{ triage.spo2?.toFixed(1) }}</div>
-          <div class="vital-unit">%</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-label">HRV RMSSD</div>
-          <div class="vital-val">{{ triage.hrvRmssd?.toFixed(1) }}</div>
-          <div class="vital-unit">ms</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-label">Stress</div>
-          <div class="vital-val" :style="{ color: stressColor }">{{ triage.stressLevel }}</div>
-          <div class="vital-unit">level</div>
+          <button class="btn ghost" style="margin-bottom:12px;font-size:12px;padding:6px 12px" @click="goBack"><i class="ti ti-arrow-left"></i>Back to Patient</button>
+          <div class="pg-title">Triage Result</div>
+          <div class="pg-sub">{{ headerSub }}</div>
         </div>
       </div>
 
-      <div class="monitor">
-        <div class="monitor-hdr">
-          <span class="monitor-label">ECG · Lead II · 256 Hz</span>
-          <span class="monitor-tag">{{ rhythmDescription(triage.rhythmLabel) }}</span>
-        </div>
-        <canvas ref="ecgCanvas" width="700" height="80" style="width:100%;display:block;"></canvas>
-      </div>
-
-      <div class="monitor">
-        <div class="monitor-hdr">
-          <span class="monitor-label">PPG · 64 Hz</span>
-          <span style="font-size:10px;color:#64748B;">SpO₂ proxy channel</span>
-        </div>
-        <canvas ref="ppgCanvas" width="700" height="55" style="width:100%;display:block;"></canvas>
-      </div>
-
-      <div class="rhythm-bars">
-        <div class="rhythm-title">Rhythm classification</div>
-        <div v-for="row in RHYTHM_ROWS" :key="row.name" class="rhythm-row" style="margin-bottom:7px;">
-          <span class="rhythm-name">{{ row.name }}</span>
-          <div class="rhythm-track">
-            <div class="rhythm-fill" :style="{ width: `${(rhythmProbs[row.name] ?? 0) * 100}%`, background: row.color }"></div>
+      <div class="body">
+        <!-- Severity banner -->
+        <div class="sev-banner" :class="triage.severity === 'RED' ? 'red' : triage.severity === 'YELLOW' ? 'yellow' : 'green'">
+          <i :class="triage.severity === 'RED' ? 'ti ti-alert-circle' : triage.severity === 'YELLOW' ? 'ti ti-alert-triangle' : 'ti ti-circle-check'"></i>
+          <div>
+            <div class="sev-label">{{ triage.severity }} — {{ triage.severity === 'RED' ? 'Critical' : triage.severity === 'YELLOW' ? 'Monitor' : 'Normal' }}</div>
+            <div class="sev-desc">{{ rhythmDescription(triage.rhythmLabel) }} · Severity score: {{ triage.severityScore?.toFixed(2) }}</div>
           </div>
-          <span class="rhythm-pct">{{ Math.round((rhythmProbs[row.name] ?? 0) * 100) }}%</span>
+        </div>
+
+        <!-- Vitals -->
+        <div class="vitals-grid">
+          <div class="vital-card"><div class="vital-lbl">Heart Rate</div><div class="vital-val">{{ Math.round(triage.heartRate) }} <span style="font-size:14px;font-weight:400">bpm</span></div></div>
+          <div class="vital-card"><div class="vital-lbl">SpO₂</div><div class="vital-val" :style="{ color: triage.spo2 < 95 ? 'var(--yellow-text)' : 'var(--text-1)' }">{{ triage.spo2?.toFixed(1) }} <span style="font-size:14px;font-weight:400">%</span></div></div>
+          <div class="vital-card"><div class="vital-lbl">HRV RMSSD</div><div class="vital-val">{{ triage.hrvRmssd?.toFixed(1) }} <span style="font-size:14px;font-weight:400">ms</span></div></div>
+          <div class="vital-card"><div class="vital-lbl">Stress Level</div><div class="vital-val" style="font-size:18px;margin-top:4px" :style="{ color: stressColor }">{{ triage.stressLevel }}</div></div>
+        </div>
+
+        <!-- ECG canvas -->
+        <div class="canvas-block">
+          <div class="canvas-lbl"><span>ECG · Lead II · 256 Hz</span><span class="rhythm-tag">{{ rhythmDescription(triage.rhythmLabel) }}</span></div>
+          <div class="canvas-bg">
+            <canvas ref="ecgCanvas" width="700" height="80" style="width:100%;display:block;"></canvas>
+          </div>
+        </div>
+
+        <!-- PPG canvas -->
+        <div class="canvas-block">
+          <div class="canvas-lbl"><span>PPG · 64 Hz</span><span style="font-size:10px;color:var(--text-3)">SpO₂ proxy channel</span></div>
+          <div class="canvas-bg">
+            <canvas ref="ppgCanvas" width="700" height="55" style="width:100%;display:block;"></canvas>
+          </div>
+        </div>
+
+        <!-- Rhythm classification -->
+        <div class="rhythm-probs">
+          <div class="sec-title" style="margin-bottom:14px">Rhythm Classification</div>
+          <div v-for="row in RHYTHM_ROWS" :key="row.name" class="rhythm-row">
+            <div class="rhythm-name">{{ row.name }}</div>
+            <div class="rhythm-track"><div class="rhythm-fill" :style="{ width: `${(rhythmProbs[row.name] ?? 0) * 100}%`, background: row.color }"></div></div>
+            <div class="rhythm-pct">{{ Math.round((rhythmProbs[row.name] ?? 0) * 100) }}%</div>
+          </div>
         </div>
       </div>
     </template>

@@ -90,116 +90,85 @@ function goToTriage(rec) {
 
 <template>
   <AppLayout>
-    <div v-if="loading" style="color: var(--tm); font-size: 13px;">Loading...</div>
+    <div v-if="loading" class="body" style="padding-top:20px;color:var(--text-3);font-size:13px;">Loading…</div>
 
-    <div v-else-if="!patient" class="card" style="padding:32px;text-align:center;color:var(--tm);font-size:13px;">
-      Patient not found.
+    <div v-else-if="!patient" class="body">
+      <div class="card" style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">Patient not found.</div>
     </div>
 
     <template v-else>
-      <div class="page-header" style="margin-bottom:14px;">
+      <div class="topbar">
         <div>
-          <button class="btn-secondary" style="margin-bottom:8px;font-size:11px;" @click="router.push('/patients')">← Back to patients</button>
-          <div class="page-title">{{ patient.name }}</div>
-          <div class="page-sub">Patient #{{ String(patient.id).padStart(3, '0') }} · Added {{ formatDate(patient.createdAt) }}</div>
+          <button class="btn ghost" style="margin-bottom:12px;font-size:12px;padding:6px 12px" @click="router.push('/patients')"><i class="ti ti-arrow-left"></i>Back to Patients</button>
+          <div class="pg-title">{{ patient.name }}</div>
+          <div class="pg-sub">Patient Record</div>
         </div>
-        <button class="btn-secondary" @click="router.push(`/patients/${patientId}/edit`)">✏ Edit patient</button>
-      </div>
-
-      <!-- Patient info card -->
-      <div class="card" style="margin-bottom:14px;">
-        <div style="padding:14px 16px;border-bottom:1px solid var(--bd);">
-          <div style="font-size:12px;font-weight:500;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;">Patient information</div>
-        </div>
-        <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Age</div>
-            <div style="font-size:14px;color:var(--tx);">{{ patient.age }} years</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Gender</div>
-            <div style="font-size:14px;color:var(--tx);">{{ patient.gender || '—' }}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Blood type</div>
-            <div style="font-size:14px;color:var(--tx);">{{ patient.bloodType || '—' }}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Conditions</div>
-            <div style="font-size:13px;color:var(--tx);">{{ patient.conditions || '—' }}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Medications</div>
-            <div style="font-size:13px;color:var(--tx);">{{ patient.medications || '—' }}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Emergency contact</div>
-            <div style="font-size:13px;color:var(--tx);">
-              <template v-if="emergencyContact">{{ emergencyContact.name }} · {{ emergencyContact.phone }}</template>
-              <template v-else>—</template>
-            </div>
-          </div>
+        <div class="flex gap-10 items-c">
+          <button class="btn ghost" @click="router.push(`/patients/${patientId}/edit`)"><i class="ti ti-edit"></i>Edit</button>
         </div>
       </div>
 
-      <!-- Upload panel -->
-      <div class="upload-panel">
-        <div class="upload-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" @click="showUpload = !showUpload">
-          <span>Upload new recording</span>
-          <span style="color:var(--tm);font-size:11px;font-weight:400;">{{ showUpload ? '▲ Hide' : '▼ Show' }}</span>
-        </div>
-        <div v-show="showUpload">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div class="form-group">
-              <label class="form-label">ECG/PPG file (.json)</label>
-              <input type="file" accept=".json" class="form-input" @change="onFileChange" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Device type</label>
-              <select v-model="deviceType" class="form-select">
-                <option>generic_wearable</option>
-                <option>apple_watch</option>
-                <option>samsung_galaxy</option>
-                <option>fitbit_sense</option>
-                <option>garmin_venu</option>
-                <option>kardia_mobile</option>
-                <option>smartphone_camera</option>
-              </select>
+      <div class="body">
+        <!-- Patient header card -->
+        <div class="pt-hdr-card">
+          <div class="av xl teal">{{ (patient.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() }}</div>
+          <div class="flex-1">
+            <div class="pt-name">{{ patient.name }}</div>
+            <div class="pt-meta">{{ patient.age }} years · {{ patient.gender || '—' }} · Blood type: {{ patient.bloodType || '—' }}</div>
+            <div class="info-grid">
+              <div><div class="info-lbl">Conditions</div><div class="info-val">{{ patient.conditions || '—' }}</div></div>
+              <div><div class="info-lbl">Medications</div><div class="info-val">{{ patient.medications || '—' }}</div></div>
+              <div><div class="info-lbl">Emergency Contact</div><div class="info-val"><template v-if="emergencyContact">{{ emergencyContact.name }} · {{ emergencyContact.phone }}</template><template v-else>—</template></div></div>
             </div>
           </div>
-          <p v-if="uploadError" style="color:#EF4444;font-size:12px;margin-bottom:12px;">{{ uploadError }}</p>
-          <button class="btn-primary" :disabled="!selectedFile || uploading" @click="runTriage">
-            {{ uploading ? 'Analysing recording…' : '▶ Run triage' }}
-          </button>
         </div>
-      </div>
 
-      <!-- Recordings table -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:14px;font-weight:500;color:var(--tx);">Recordings ({{ recordings.length }})</div>
-      </div>
-      <div v-if="recordings.length === 0" class="card" style="padding:32px;text-align:center;color:var(--tm);font-size:13px;">
-        No recordings yet for this patient.
-      </div>
-      <div v-else class="card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="width:28%;">Date uploaded</th>
-              <th style="width:22%;">Device</th>
-              <th style="width:22%;">Severity</th>
-              <th style="width:28%;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="rec in recordings" :key="rec.id">
-              <td style="font-size:12px;color:var(--tm);">{{ formatRecordingDate(rec.uploadedAt) }}</td>
-              <td style="font-size:12px;">{{ rec.deviceType }}</td>
-              <td><span class="badge" :class="severityBadgeClass(rec.triageResult?.severity)">{{ rec.triageResult?.severity ?? 'No result' }}</span></td>
-              <td><button class="btn-secondary" style="font-size:11px;padding:4px 10px;" @click="goToTriage(rec)">View result →</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Two-column: recordings + upload -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <div class="sec-hdr"><div class="sec-title">Recordings ({{ recordings.length }})</div></div>
+            <div v-if="recordings.length === 0" class="card" style="padding:24px;text-align:center;color:var(--text-3);font-size:13px;">No recordings yet.</div>
+            <div
+              v-for="rec in recordings"
+              :key="rec.id"
+              class="row-card"
+              @click="goToTriage(rec)"
+            >
+              <div class="av sm teal">{{ (patient.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() }}</div>
+              <div class="flex-1">
+                <div class="row-name" style="font-size:12.5px">Recording · {{ rec.deviceType }}</div>
+                <div class="row-sub">{{ formatRecordingDate(rec.uploadedAt) }}</div>
+              </div>
+              <span class="badge" :class="severityBadgeClass(rec.triageResult?.severity)">{{ rec.triageResult?.severity ?? '—' }}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="sec-hdr"><div class="sec-title">Upload New Recording</div></div>
+            <div class="card">
+              <div class="upload-zone" @click="$el.querySelector('input[type=file]').click()" style="position:relative">
+                <i class="ti ti-cloud-upload"></i>
+                <div class="upload-zone-title">{{ selectedFile ? selectedFile.name : 'Drop .json file here' }}</div>
+                <div class="upload-zone-sub">ECG/PPG wearable recording</div>
+                <input type="file" accept=".json" style="display:none" @change="onFileChange">
+              </div>
+              <div class="form-group mt-14 mb-0">
+                <div class="form-label">Device Type</div>
+                <select v-model="deviceType" class="form-select">
+                  <option>generic_wearable</option>
+                  <option>apple_watch</option>
+                  <option>samsung_galaxy</option>
+                  <option>fitbit_sense</option>
+                  <option>garmin_venu</option>
+                  <option>kardia_mobile</option>
+                  <option>smartphone_camera</option>
+                </select>
+              </div>
+              <p v-if="uploadError" style="color:var(--red-text);font-size:12px;margin-top:10px;">{{ uploadError }}</p>
+              <button class="btn primary full" style="margin-top:12px" :disabled="!selectedFile || uploading" @click="runTriage"><i class="ti ti-brain"></i>{{ uploading ? 'Analysing…' : 'Run Triage' }}</button>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
   </AppLayout>

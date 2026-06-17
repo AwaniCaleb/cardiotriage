@@ -2,13 +2,19 @@ import { defineStore } from 'pinia'
 
 export const useThemeStore = defineStore('theme', {
   state: () => ({
-    isDark: localStorage.getItem('ct_dark') !== 'false',
+    theme: localStorage.getItem('ct-theme') || 'dark',
   }),
+
+  getters: {
+    isDark: (state) => state.theme !== 'light',
+  },
 
   actions: {
     toggle() {
-      this.isDark = !this.isDark
-      localStorage.setItem('ct_dark', String(this.isDark))
+      const cycle = { light: 'dark', dark: 'night', night: 'light' }
+      this.theme = cycle[this.theme] || 'dark'
+      localStorage.setItem('ct-theme', this.theme)
+      document.documentElement.setAttribute('data-theme', this.theme)
     },
   },
 })

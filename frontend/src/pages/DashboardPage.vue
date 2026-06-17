@@ -67,58 +67,68 @@ onMounted(async () => {
 
 <template>
   <AppLayout>
-    <div class="page-header">
+    <div class="topbar">
       <div>
-        <div class="page-title">Dashboard</div>
-        <div class="page-sub">{{ todayLabel }}</div>
+        <div class="pg-title">Dashboard</div>
+        <div class="pg-sub">{{ todayLabel }}</div>
       </div>
+      <div class="warn-pill"><i class="ti ti-alert-triangle" style="font-size:12px"></i>Educational · not for clinical use</div>
     </div>
 
-    <div v-if="loading" style="color: var(--tm); font-size: 13px;">Loading...</div>
+    <div class="body">
+      <div v-if="loading" style="color:var(--text-3);font-size:13px;padding:20px 0">Loading…</div>
 
-    <template v-else>
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Patients</div>
-          <div class="stat-num">{{ stats.totalPatients }}</div>
-          <div class="stat-sub" :style="{ color: stats.newPatients > 0 ? '#22C55E' : 'var(--tm)' }">
-            {{ stats.newPatients > 0 ? `↑ ${stats.newPatients} this week` : 'No new patients this week' }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Recordings</div>
-          <div class="stat-num">{{ stats.totalRecordings }}</div>
-          <div class="stat-sub" :style="{ color: stats.recordingsToday > 0 ? '#22C55E' : 'var(--tm)' }">
-            {{ stats.recordingsToday > 0 ? `↑ ${stats.recordingsToday} today` : 'No recordings today' }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Critical Alerts</div>
-          <div class="stat-num" :style="{ color: stats.critical > 0 ? '#FCA5A5' : 'var(--tx)' }">{{ stats.critical }}</div>
-          <div class="stat-sub" :style="{ color: stats.critical > 0 ? '#FCA5A5' : 'var(--tm)' }">
-            {{ stats.critical > 0 ? `⚠ ${stats.criticalPatient}` : 'No critical alerts' }}
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="padding:14px 16px;border-bottom:1px solid var(--bd);">
-          <div style="font-size:11px;font-weight:500;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;">Recent recordings</div>
-        </div>
-        <div style="padding:0 16px;">
-          <div v-if="recentRecordings.length === 0" style="padding:16px 0;color:var(--tm);font-size:13px;">
-            No recordings yet.
-          </div>
-          <div v-for="rec in recentRecordings" :key="rec.id" class="activity-item">
-            <div class="act-avatar" :style="avatarColors(rec.triageResult?.severity)">{{ initials(rec.patientName) }}</div>
-            <div style="flex:1;">
-              <div style="font-size:13px;color:var(--tx);font-weight:500;">{{ rec.patientName }}</div>
-              <div style="font-size:11px;color:var(--tm);">{{ rhythmDescription(rec.triageResult?.rhythmLabel) }} · {{ formatRelativeTime(rec.uploadedAt) }}</div>
+      <template v-else>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-lbl"><i class="ti ti-users"></i>Total Patients</div>
+            <div class="stat-val">{{ stats.totalPatients }}</div>
+            <div class="stat-sub">
+              <span v-if="stats.newPatients > 0" class="up">↑ {{ stats.newPatients }}</span>
+              <span v-else>—</span>
+              <span>{{ stats.newPatients > 0 ? 'this week' : 'No new this week' }}</span>
             </div>
-            <span class="badge" :class="severityBadgeClass(rec.triageResult?.severity)">{{ rec.triageResult?.severity ?? 'No result' }}</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-lbl"><i class="ti ti-activity"></i>Recordings</div>
+            <div class="stat-val">{{ stats.totalRecordings }}</div>
+            <div class="stat-sub">
+              <span v-if="stats.recordingsToday > 0" class="up">↑ {{ stats.recordingsToday }}</span>
+              <span v-else>—</span>
+              <span>{{ stats.recordingsToday > 0 ? 'today' : 'None today' }}</span>
+            </div>
+          </div>
+          <div class="stat-card" :class="{ alert: stats.critical > 0 }">
+            <div class="stat-lbl"><i class="ti ti-alert-circle" :style="{ color: 'var(--purple)' }"></i>Critical Alerts</div>
+            <div class="stat-val" :class="{ red: stats.critical > 0 }">{{ stats.critical }}</div>
+            <div class="stat-sub">
+              <i v-if="stats.critical > 0" class="ti ti-alert-circle" style="font-size:11px;color:var(--purple)"></i>
+              <span :class="stats.critical > 0 ? 'ref' : ''">{{ stats.critical > 0 ? stats.criticalPatient : 'No critical alerts' }}</span>
+            </div>
           </div>
         </div>
-      </div>
-    </template>
+
+        <div class="sec-hdr">
+          <div class="sec-title">Recent Recordings</div>
+          <button class="sec-action" @click="$router.push('/patients')">See all →</button>
+        </div>
+
+        <div v-if="recentRecordings.length === 0" style="color:var(--text-3);font-size:13px;padding:12px 0">No recordings yet.</div>
+
+        <div
+          v-for="rec in recentRecordings"
+          :key="rec.id"
+          class="row-card"
+          @click="$router.push('/patients/' + rec.patientId)"
+        >
+          <div class="av" :class="rec.triageResult?.severity === 'RED' ? 'red' : rec.triageResult?.severity === 'GREEN' ? 'green' : rec.triageResult?.severity === 'YELLOW' ? 'purple' : 'teal'">{{ initials(rec.patientName) }}</div>
+          <div class="flex-1">
+            <div class="row-name">{{ rec.patientName }}</div>
+            <div class="row-sub">{{ rhythmDescription(rec.triageResult?.rhythmLabel) }} · {{ formatRelativeTime(rec.uploadedAt) }}</div>
+          </div>
+          <span class="badge" :class="severityBadgeClass(rec.triageResult?.severity)">{{ rec.triageResult?.severity ?? '—' }}</span>
+        </div>
+      </template>
+    </div>
   </AppLayout>
 </template>

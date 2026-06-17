@@ -85,12 +85,14 @@ let ecgDrawX = 0
 let ppgDrawX = 0
 const ECG_PX_PER_FRAME = 3
 const PPG_PX_PER_FRAME = 3
+let canvasBgColor = '#111D30'
 
 function initCanvas(canvas, height) {
+  canvasBgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-card-2').trim() || '#111D30'
   canvas.width  = canvas.offsetWidth
   canvas.height = height
   const ctx = canvas.getContext('2d')
-  ctx.fillStyle = '#060C18'
+  ctx.fillStyle = canvasBgColor
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 }
 
@@ -118,7 +120,7 @@ function stripECG() {
   } else {
     // Phase 2: scroll canvas left, append on right
     ctx.drawImage(canvas, -ECG_PX_PER_FRAME, 0)
-    ctx.fillStyle = '#060C18'
+    ctx.fillStyle = canvasBgColor
     ctx.fillRect(w - ECG_PX_PER_FRAME - 1, 0, ECG_PX_PER_FRAME + 1, h)
     ctx.strokeStyle = '#22D3EE'
     ctx.lineWidth   = 1.5
@@ -155,7 +157,7 @@ function stripPPG() {
   } else {
     // Phase 2: scroll canvas left, append on right
     ctx.drawImage(canvas, -PPG_PX_PER_FRAME, 0)
-    ctx.fillStyle = '#060C18'
+    ctx.fillStyle = canvasBgColor
     ctx.fillRect(w - PPG_PX_PER_FRAME - 1, 0, PPG_PX_PER_FRAME + 1, h)
     ctx.strokeStyle = '#F97316'
     ctx.lineWidth   = 1.5

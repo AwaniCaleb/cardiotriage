@@ -41,19 +41,19 @@ function avatarLabel(member) {
 
 <template>
   <PublicLayout>
-    <div style="height:100%;overflow-y:auto;background:#060C18">
+    <div style="height:100%;overflow-y:auto;background:var(--bg-page)">
       <!-- Header -->
       <div class="team-header">
         <button class="team-back-btn" @click="router.push('/')">← Back to home</button>
         <div class="landing-badge">Rivers State University · Dept. of Computer Science</div>
-        <h1 style="color:#F1F5F9;font-size:28px;font-weight:500;margin:16px 0 10px;">Meet the Team</h1>
-        <p style="color:#64748B;max-width:480px;margin:0 auto;line-height:1.7;">
+        <h1 style="color:var(--text-1);font-size:28px;font-weight:500;margin:16px 0 10px;">Meet the Team</h1>
+        <p style="color:var(--text-2);max-width:480px;margin:0 auto;line-height:1.7;">
           CardioTriage was developed by a team of Computer Science students as a continuous
           assessment project, 2025/2026 academic session.
         </p>
         <div class="team-project-card">
-          <div style="color:#38BDF8;font-size:13px;margin-bottom:4px;">Project: CardioTriage — Wearable ECG Triage System</div>
-          <div style="color:#64748B;font-size:11px;">Submitted to the Department of Computer Science, RSU</div>
+          <div style="color:var(--accent);font-size:13px;margin-bottom:4px;">Project: CardioTriage — Wearable ECG Triage System</div>
+          <div style="color:var(--text-3);font-size:11px;">Submitted to the Department of Computer Science, RSU</div>
         </div>
       </div>
 
@@ -76,8 +76,8 @@ function avatarLabel(member) {
 
       <!-- Footer -->
       <div class="team-footer">
-        <div style="color:#3D5A7A;font-size:12px;">Rivers State University · Department of Computer Science · Port Harcourt, Nigeria</div>
-        <div style="color:#3D5A7A;font-size:11px;margin-top:4px;">⚠ Educational project — not for clinical use</div>
+        <div style="color:var(--text-3);font-size:12px;">Rivers State University · Department of Computer Science · Port Harcourt, Nigeria</div>
+        <div style="color:var(--text-3);font-size:11px;margin-top:4px;">⚠ Educational project — not for clinical use</div>
       </div>
     </div>
   </PublicLayout>

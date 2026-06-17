@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /team
+Disallow: /dashboard
+Disallow: /patients
+Disallow: /triage
+Disallow: /live-demo
+
+Sitemap: https://cardiotriage.vercel.app/sitemap.xml

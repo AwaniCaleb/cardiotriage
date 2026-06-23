@@ -28,7 +28,7 @@ Install all of these before anything else.
 ## 2. Clone the Repository
 
 ```bash
-git clone https://github.com/[username]/cardiotriage.git
+git clone https://github.com/AwaniCaleb/cardiotriage.git
 cd cardiotriage
 git checkout development
 ```
